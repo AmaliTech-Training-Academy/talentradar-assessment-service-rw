@@ -1,0 +1,1 @@
+# talentradar-assessment-service-rw
