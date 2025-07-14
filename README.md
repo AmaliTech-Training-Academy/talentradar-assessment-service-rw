@@ -1,1 +1,1 @@
-# talentradar-assessment-service-rw
+# talentradar-assessment-service-rwa
