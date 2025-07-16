@@ -1,6 +1,7 @@
-# Code owners for development branch - talentradar-assessment-service-rw
-# .github folder is managed by bikaze and muhirwaJD
-/.github/ @bikaze @muhirwaJD
+# Code owners for talentradar-assessment-service-rw
+# Global owners for all files (except .github/)
+*  @nkbtemmy2 @bumlev
 
-# Everything else is managed by nkbtemmy2 and bumlev
-* @nkbtemmy2 @bumlev
+# GitHub folder specific owners
+.github/ @bikaze @muhirwaJD
+
