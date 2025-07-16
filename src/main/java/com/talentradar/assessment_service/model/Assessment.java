@@ -31,8 +31,8 @@ public class Assessment {
     @Column(name = "submission_status", nullable = false)
     private SubmissionStatus submissionStatus;
 
-    @Column(name = "avarage_score", nullable = false)
-    private int avarageScore;
+    @Column(name = "average_score", nullable = false)
+    private int averageScore;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reflection;
