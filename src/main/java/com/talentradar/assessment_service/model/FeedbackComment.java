@@ -23,5 +23,8 @@ public class FeedbackComment {
     @ManyToOne
     @JoinColumn(name = "comment_id")
     private Comment comment;
+
+    @Column(name = "feedback_comment_body", nullable = false)
+    private String feedbackCommentBody;
 }
 
