@@ -22,7 +22,5 @@ public class Comment {
     @Column(name = "comment_title", nullable = false)
     private String commentTitle;
 
-    @Column(name = "comment_content", nullable = false)
-    private String commentContent;
 }
 
