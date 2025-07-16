@@ -1,0 +1,20 @@
+package com.talentradar.assessment_service.dto.dimensionDefinition;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DimensionDefinitionDto {
+    private UUID id;
+    private String dimensionName;
+    private String description;
+    private BigDecimal weight;
+}
