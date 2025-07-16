@@ -23,6 +23,6 @@ public class GradingCriteria {
     private String criteriaName;
 
     @OneToMany(mappedBy = "criteria", cascade = CascadeType.ALL)
-    private List<DimensionCriteria> dimensionCriteriaLinks;
+    private List<DimensionCriteria> dimensionCriteriaList;
 }
 
