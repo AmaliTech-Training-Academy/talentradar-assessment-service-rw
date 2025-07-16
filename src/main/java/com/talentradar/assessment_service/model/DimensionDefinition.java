@@ -36,5 +36,5 @@ public class DimensionDefinition {
     private List<FeedbackDimension> feedbackDimensions;
 
     @OneToMany(mappedBy = "dimensionDefinition", cascade = CascadeType.ALL)
-    private List<DimensionCriteria> criteriaLinks;
+    private List<DimensionCriteria> dimensionCriteriaList;
 }
