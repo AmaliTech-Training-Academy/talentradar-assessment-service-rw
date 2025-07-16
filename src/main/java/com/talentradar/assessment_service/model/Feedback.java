@@ -17,6 +17,7 @@ import java.util.*;
 public class Feedback {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "manager_id", nullable = false)

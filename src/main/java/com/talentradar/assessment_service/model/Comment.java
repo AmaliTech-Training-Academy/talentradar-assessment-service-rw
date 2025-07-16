@@ -17,6 +17,7 @@ import java.util.UUID;
 public class Comment {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "comment_title", nullable = false)

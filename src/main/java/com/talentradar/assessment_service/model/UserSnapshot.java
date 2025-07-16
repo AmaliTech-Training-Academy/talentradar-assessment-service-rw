@@ -17,6 +17,7 @@ import java.util.UUID;
 public class UserSnapshot {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "user_id", nullable = false)

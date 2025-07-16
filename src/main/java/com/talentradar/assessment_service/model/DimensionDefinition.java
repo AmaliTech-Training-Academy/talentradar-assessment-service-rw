@@ -18,6 +18,7 @@ import java.util.*;
 public class DimensionDefinition {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "dimension_name", nullable = false)

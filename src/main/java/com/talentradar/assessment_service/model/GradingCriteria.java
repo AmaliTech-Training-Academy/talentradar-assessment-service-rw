@@ -17,6 +17,7 @@ import java.util.*;
 public class GradingCriteria {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "criteria_name", nullable = false)
