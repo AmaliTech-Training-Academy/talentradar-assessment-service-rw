@@ -1,8 +1,8 @@
 package com.talentradar.assessment_service.service;
 
-import com.talentradar.assessment_service.dto.dimensionDefinition.CreateDimensionDefinitionDto;
-import com.talentradar.assessment_service.dto.dimensionDefinition.DimensionDefinitionDto;
-import com.talentradar.assessment_service.dto.dimensionDefinition.UpdateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.CreateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.response.DimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.UpdateDimensionDefinitionDto;
 import java.util.List;
 import java.util.UUID;
 

@@ -1,8 +1,8 @@
 package com.talentradar.assessment_service.service;
 
-import com.talentradar.assessment_service.dto.gradingCriteria.CreateGradingCriteriaDto;
-import com.talentradar.assessment_service.dto.gradingCriteria.GradingCriteriaDto;
-import com.talentradar.assessment_service.dto.gradingCriteria.UpdateGradingCriteriaDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.request.CreateGradingCriteriaDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.response.GradingCriteriaDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.request.UpdateGradingCriteriaDto;
 import com.talentradar.assessment_service.exception.GradingCriteriaNotFoundException;
 import com.talentradar.assessment_service.model.GradingCriteria;
 import com.talentradar.assessment_service.repository.GradingCriteriaRepository;

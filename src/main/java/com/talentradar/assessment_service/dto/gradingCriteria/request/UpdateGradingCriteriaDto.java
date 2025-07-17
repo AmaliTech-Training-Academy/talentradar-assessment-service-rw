@@ -1,4 +1,4 @@
-package com.talentradar.assessment_service.dto.gradingCriteria;
+package com.talentradar.assessment_service.dto.gradingCriteria.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

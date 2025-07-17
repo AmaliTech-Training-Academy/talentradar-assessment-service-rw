@@ -1,8 +1,8 @@
 package com.talentradar.assessment_service.service;
 
-import com.talentradar.assessment_service.dto.dimensionDefinition.CreateDimensionDefinitionDto;
-import com.talentradar.assessment_service.dto.dimensionDefinition.DimensionDefinitionDto;
-import com.talentradar.assessment_service.dto.dimensionDefinition.UpdateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.CreateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.response.DimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.UpdateDimensionDefinitionDto;
 import com.talentradar.assessment_service.exception.DimensionDefinitionNotFoundException;
 import com.talentradar.assessment_service.model.DimensionDefinition;
 import com.talentradar.assessment_service.repository.DimensionDefinitionRepository;
@@ -20,7 +20,6 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

@@ -1,4 +1,4 @@
-package com.talentradar.assessment_service.dto.gradingCriteria;
+package com.talentradar.assessment_service.dto.comment.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateGradingCriteriaDto {
-    @NotBlank(message = "Criteria name is required")
-    private String criteriaName;
+public class CreateCommentDto {
+    @NotBlank(message = "Comment title is required")
+    private String commentTitle;
 }

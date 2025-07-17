@@ -1,4 +1,4 @@
-package com.talentradar.assessment_service.dto.gradingCriteria;
+package com.talentradar.assessment_service.dto.comment.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +10,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GradingCriteriaDto {
+public class CommentDto {
     private UUID id;
-    private String criteriaName;
+    private String commentTitle;
 }
