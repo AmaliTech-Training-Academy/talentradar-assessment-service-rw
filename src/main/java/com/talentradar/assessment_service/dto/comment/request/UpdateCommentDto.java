@@ -1,16 +1,14 @@
-package com.talentradar.assessment_service.dto.comment;
+package com.talentradar.assessment_service.dto.comment.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CommentDto {
-    private UUID id;
+public class UpdateCommentDto {
     private String commentTitle;
 }

@@ -1,4 +1,4 @@
-package com.talentradar.assessment_service.dto.gradingCriteria;
+package com.talentradar.assessment_service.dto.gradingCriteria.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

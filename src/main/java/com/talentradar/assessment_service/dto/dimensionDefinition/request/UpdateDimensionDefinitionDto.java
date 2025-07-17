@@ -1,4 +1,4 @@
-package com.talentradar.assessment_service.dto.dimensionDefinition;
+package com.talentradar.assessment_service.dto.dimensionDefinition.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

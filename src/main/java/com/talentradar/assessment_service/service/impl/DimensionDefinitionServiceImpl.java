@@ -1,9 +1,9 @@
 package com.talentradar.assessment_service.service.impl;
 
-import com.talentradar.assessment_service.dto.dimensionDefinition.CreateDimensionDefinitionDto;
-import com.talentradar.assessment_service.dto.dimensionDefinition.DimensionDefinitionDto;
-import com.talentradar.assessment_service.dto.dimensionDefinition.UpdateDimensionDefinitionDto;
-import com.talentradar.assessment_service.dto.gradingCriteria.GradingCriteriaDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.CreateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.response.DimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.UpdateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.response.GradingCriteriaDto;
 import com.talentradar.assessment_service.exception.DimensionDefinitionNotFoundException;
 import com.talentradar.assessment_service.exception.GradingCriteriaNotFoundException;
 import com.talentradar.assessment_service.model.DimensionDefinition;

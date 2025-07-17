@@ -1,8 +1,8 @@
 package com.talentradar.assessment_service.service.impl;
 
-import com.talentradar.assessment_service.dto.comment.CommentDto;
-import com.talentradar.assessment_service.dto.comment.CreateCommentDto;
-import com.talentradar.assessment_service.dto.comment.UpdateCommentDto;
+import com.talentradar.assessment_service.dto.comment.response.CommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
 import com.talentradar.assessment_service.exception.CommentNotFoundException;
 import com.talentradar.assessment_service.model.Comment;
 import com.talentradar.assessment_service.repository.CommentRepository;
@@ -50,7 +50,7 @@ public class CommentServiceImpl implements CommentService {
     }
     
     @Override
-    public CommentDto updateComment(UUID id, UpdateCommentDto updateDto) {
+    public CommentDto updateComment(UUID id, CreateCommentDto updateDto) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new CommentNotFoundException("Comment not found with id: " + id));
         

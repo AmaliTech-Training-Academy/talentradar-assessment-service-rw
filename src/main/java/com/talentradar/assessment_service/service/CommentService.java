@@ -1,8 +1,8 @@
 package com.talentradar.assessment_service.service;
 
-import com.talentradar.assessment_service.dto.comment.CommentDto;
-import com.talentradar.assessment_service.dto.comment.CreateCommentDto;
-import com.talentradar.assessment_service.dto.comment.UpdateCommentDto;
+import com.talentradar.assessment_service.dto.comment.response.CommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +26,7 @@ public interface CommentService {
     /**
      * Update existing comment
      */
-    CommentDto updateComment(UUID id, UpdateCommentDto updateDto);
+    CommentDto updateComment(UUID id, CreateCommentDto updateDto);
     
     /**
      * Delete comment
