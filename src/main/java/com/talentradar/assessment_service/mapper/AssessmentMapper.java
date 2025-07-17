@@ -1,7 +1,7 @@
 package com.talentradar.assessment_service.mapper;
 
 import com.talentradar.assessment_service.dto.assessment.request.AssessmentRequestDTO;
-import com.talentradar.assessment_service.dto.assessment.request.AssessmentResponseDTO;
+import com.talentradar.assessment_service.dto.assessment.response.AssessmentResponseDTO;
 import com.talentradar.assessment_service.dto.assessment.response.DimensionResponseDTO;
 import com.talentradar.assessment_service.model.Assessment;
 import com.talentradar.assessment_service.model.AssessmentDimension;
