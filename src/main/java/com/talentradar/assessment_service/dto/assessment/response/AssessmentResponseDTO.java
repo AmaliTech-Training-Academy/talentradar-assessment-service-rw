@@ -1,6 +1,5 @@
-package com.talentradar.assessment_service.dto.assessment.request;
+package com.talentradar.assessment_service.dto.assessment.response;
 
-import com.talentradar.assessment_service.dto.assessment.response.DimensionResponseDTO;
 import com.talentradar.assessment_service.model.SubmissionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

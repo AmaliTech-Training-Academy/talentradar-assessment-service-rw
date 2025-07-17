@@ -1,4 +1,4 @@
-package com.talentradar.assessment_service.dto.assessment.response;
+package com.talentradar.assessment_service.dto.assessment.request;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

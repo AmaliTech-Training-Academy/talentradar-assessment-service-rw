@@ -1,6 +1,5 @@
 package com.talentradar.assessment_service.dto.assessment.request;
 
-import com.talentradar.assessment_service.dto.assessment.response.DimensionRatingDTO;
 import com.talentradar.assessment_service.model.SubmissionStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
