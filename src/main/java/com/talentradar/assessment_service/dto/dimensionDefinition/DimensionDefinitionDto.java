@@ -1,11 +1,13 @@
 package com.talentradar.assessment_service.dto.dimensionDefinition;
 
+import com.talentradar.assessment_service.dto.gradingCriteria.GradingCriteriaDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -17,4 +19,5 @@ public class DimensionDefinitionDto {
     private String dimensionName;
     private String description;
     private BigDecimal weight;
+    private Set<GradingCriteriaDto> gradingCriteria;
 }

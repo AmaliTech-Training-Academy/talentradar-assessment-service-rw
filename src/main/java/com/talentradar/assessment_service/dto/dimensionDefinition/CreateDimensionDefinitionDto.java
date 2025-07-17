@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
+import java.util.Set;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -24,4 +26,6 @@ public class CreateDimensionDefinitionDto {
     @DecimalMin(value = "0.0", message = "Weight must be positive")
     @DecimalMax(value = "100.0", message = "Weight cannot exceed 100")
     private BigDecimal weight;
+
+    private Set<UUID> gradingCriteriaIds;
 }

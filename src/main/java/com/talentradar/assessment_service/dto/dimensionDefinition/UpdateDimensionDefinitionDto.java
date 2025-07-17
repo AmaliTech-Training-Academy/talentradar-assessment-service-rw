@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
+import java.util.Set;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -19,4 +21,6 @@ public class UpdateDimensionDefinitionDto {
     @DecimalMin(value = "0.0", message = "Weight must be positive")
     @DecimalMax(value = "100.0", message = "Weight cannot exceed 100")
     private BigDecimal weight;
+
+    private Set<UUID> gradingCriteriaIds;
 }
