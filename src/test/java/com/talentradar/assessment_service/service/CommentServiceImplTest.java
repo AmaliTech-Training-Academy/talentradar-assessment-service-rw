@@ -1,8 +1,8 @@
 package com.talentradar.assessment_service.service;
 
-import com.talentradar.assessment_service.dto.comment.CommentDto;
-import com.talentradar.assessment_service.dto.comment.CreateCommentDto;
-import com.talentradar.assessment_service.dto.comment.UpdateCommentDto;
+import com.talentradar.assessment_service.dto.comment.response.CommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
 import com.talentradar.assessment_service.exception.CommentNotFoundException;
 import com.talentradar.assessment_service.model.Comment;
 import com.talentradar.assessment_service.repository.CommentRepository;
@@ -33,7 +33,7 @@ class CommentServiceImplTest {
 
     private Comment sampleComment;
     private CreateCommentDto createDto;
-    private UpdateCommentDto updateDto;
+    private CreateCommentDto updateDto;
     private UUID commentId;
 
     @BeforeEach
@@ -49,7 +49,7 @@ class CommentServiceImplTest {
                 .commentTitle("Great communication abilities")
                 .build();
 
-        updateDto = UpdateCommentDto.builder()
+        updateDto = CreateCommentDto.builder()
                 .commentTitle("Updated: Outstanding technical expertise")
                 .build();
     }
@@ -161,7 +161,7 @@ class CommentServiceImplTest {
     @DisplayName("Should not update when comment title is null")
     void updateComment_ShouldNotUpdate_WhenCommentTitleIsNull() {
         // Given
-        UpdateCommentDto nullUpdateDto = UpdateCommentDto.builder()
+        CreateCommentDto nullUpdateDto = CreateCommentDto.builder()
                 .commentTitle(null)
                 .build();
         
