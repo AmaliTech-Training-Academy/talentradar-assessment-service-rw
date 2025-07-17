@@ -4,8 +4,10 @@ import com.talentradar.assessment_service.model.AssessmentDimension;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public interface AssessmentDimensionRepository extends JpaRepository<AssessmentDimension, UUID> {
+
+    List<AssessmentDimension> findByAssessmentId(UUID assessmentId);
 }
