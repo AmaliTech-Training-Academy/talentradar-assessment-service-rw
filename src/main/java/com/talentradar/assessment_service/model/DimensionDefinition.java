@@ -1,17 +1,23 @@
 package com.talentradar.assessment_service.model;
 
+
+
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 
 @Entity
 @Table(name = "dimension_definition")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = {"gradingCriteriaSet", "assessmentDimensions", "feedbackDimensions"})
+@ToString(exclude = {"gradingCriteriaSet", "assessmentDimensions", "feedbackDimensions"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
