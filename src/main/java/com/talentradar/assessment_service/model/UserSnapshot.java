@@ -23,7 +23,7 @@ public class UserSnapshot {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "manager_id", nullable = false)
+    @Column(name = "manager_id")
     private UUID managerId;
 
     @Column(name = "full_name", nullable = false)
