@@ -23,7 +23,7 @@ public class GradingCriteria {
     @Column(name = "criteria_name", nullable = false)
     private String criteriaName;
 
-    @OneToMany(mappedBy = "criteria", cascade = CascadeType.ALL)
-    private List<DimensionCriteria> dimensionCriteriaList;
+    @ManyToMany(mappedBy = "gradingCriteriaSet")
+    private Set<DimensionDefinition> dimensionDefinitions = new HashSet<>();
 }
 
