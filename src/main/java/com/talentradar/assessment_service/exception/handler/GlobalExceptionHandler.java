@@ -1,9 +1,8 @@
 package com.talentradar.assessment_service.exception.handler;
 
 import com.talentradar.assessment_service.dto.api.ApiResponse;
-import com.talentradar.assessment_service.exception.CommentNotFoundException;
-import com.talentradar.assessment_service.exception.DimensionDefinitionNotFoundException;
-import com.talentradar.assessment_service.exception.GradingCriteriaNotFoundException;
+import com.talentradar.assessment_service.exception.*;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +16,7 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Slf4j
+@Hidden
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DimensionDefinitionNotFoundException.class)
@@ -66,4 +66,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("An unexpected error occurred", "Internal server error"));
     }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadRequestException(BadRequestException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(ex.getMessage(), "Invalid request"));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotFoundException(ResourceNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage(), "Resource not found"));
+    }
+
+    @ExceptionHandler(DuplicateSubmissionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateSubmission(DuplicateSubmissionException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage(), "Duplicate submission"));
+    }
+
 }

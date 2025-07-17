@@ -1,19 +1,23 @@
 package com.talentradar.assessment_service.model;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.util.*;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 
 @Entity
 @Table(name = "grading_criteria")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(exclude = {"dimensionDefinitions"})
+@ToString(exclude = {"dimensionDefinitions"})
 public class GradingCriteria {
 
     @Id
