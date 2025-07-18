@@ -4,6 +4,7 @@ import com.talentradar.assessment_service.dto.assessment.request.AssessmentReque
 import com.talentradar.assessment_service.dto.assessment.request.DimensionRatingDTO;
 import com.talentradar.assessment_service.dto.assessment.response.AssessmentResponseDTO;
 import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
+import com.talentradar.assessment_service.event.producer.AssessmentEventProducer;
 import com.talentradar.assessment_service.exception.BadRequestException;
 import com.talentradar.assessment_service.exception.ResourceNotFoundException;
 import com.talentradar.assessment_service.mapper.AssessmentMapper;
@@ -40,6 +41,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final DimensionDefinitionRepository dimensionDefinitionRepository;
     private final AssessmentMapper assessmentMapper;
     private final UserSnapshotRepository userSnapshotRepository;
+    private final AssessmentEventProducer assessmentEventProducer;
 
     @Transactional
     @Override
@@ -80,6 +82,17 @@ public class AssessmentServiceImpl implements AssessmentService {
         log.info("Saved {} assessment dimensions for assessmentId={}", dimensions.size(), savedAssessment.getId());
 
         savedAssessment.setDimensions(dimensions);
+
+        // Publish assessment event to Kafka for AI analysis
+        try {
+            assessmentEventProducer.publishAssessmentSubmitted(savedAssessment);
+            log.info("Assessment event published successfully for assessmentId={}", savedAssessment.getId());
+        } catch (Exception e) {
+            log.error("Failed to publish assessment event for assessmentId={}: {}",
+                    savedAssessment.getId(), e.getMessage(), e);
+            // Don't fail the transaction if event publishing fails
+        }
+
         return assessmentMapper.toResponseDto(savedAssessment);
     }
 
