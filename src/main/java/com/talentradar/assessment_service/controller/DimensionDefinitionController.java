@@ -26,8 +26,6 @@ public class DimensionDefinitionController {
     private final DimensionDefinitionService dimensionDefinitionService;
     private final GradingCriteriaService gradingCriteriaService;
 
-    // ============= DIMENSION DEFINITION ENDPOINTS =============
-
     @GetMapping
     public ResponseEntity<ApiResponse<List<DimensionDefinitionDto>>> getAllDimensions() {
         List<DimensionDefinitionDto> dimensions = dimensionDefinitionService.getAllDimensions();
