@@ -183,21 +183,17 @@ class FeedbackCommentServiceImplTest {
     @Test
     @DisplayName("Should map feedback comment to DTO correctly")
     void mapToDto_ShouldMapCorrectly_WhenValidFeedbackComment() {
-        // This test verifies the mapping logic indirectly through createFeedbackComment
-        // Given
+
         when(feedbackRepository.findById(feedbackId)).thenReturn(Optional.of(sampleFeedback));
         when(commentRepository.findById(commentId)).thenReturn(Optional.of(sampleComment));
         when(feedbackCommentRepository.save(any(FeedbackComment.class))).thenReturn(sampleFeedbackComment);
 
-        // When
         FeedbackCommentDto result = feedbackCommentService.createFeedbackComment(createDto);
 
-        // Then - Verify all fields are mapped correctly
         assertThat(result.getId()).isEqualTo(feedbackCommentId);
         assertThat(result.getFeedbackId()).isEqualTo(feedbackId);
         assertThat(result.getFeedbackCommentBody()).isEqualTo("Demonstrates excellent problem-solving skills and leadership qualities");
         
-        // Verify nested comment mapping
         assertThat(result.getComment()).isNotNull();
         assertThat(result.getComment().getId()).isEqualTo(commentId);
         assertThat(result.getComment().getCommentTitle()).isEqualTo("Key Strengths & Achievements");
@@ -206,11 +202,9 @@ class FeedbackCommentServiceImplTest {
     @Test
     @DisplayName("Should handle null feedback comments list gracefully")
     void getFeedbackCommentsByFeedbackId_ShouldHandleNullGracefully() {
-        // Given
         FeedbackComment mockFeedbackComment = FeedbackComment.builder().id(feedbackId).build();
         when(feedbackCommentRepository.findByFeedbackId(mockFeedbackComment)).thenReturn(null);
 
-        // When & Then
         assertThatThrownBy(() -> feedbackCommentService.getFeedbackCommentsByFeedbackId(feedbackId))
                 .isInstanceOf(NullPointerException.class);
 

@@ -70,14 +70,12 @@ class FeedbackServiceImplTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        // Create dimension request
         CreateFeedbackDimensionRequestDto dimensionRequest = CreateFeedbackDimensionRequestDto.builder()
                 .dimensionDefinitionId(dimensionId)
                 .rating(4)
                 .comment("Great technical skills")
                 .build();
 
-        // Create comment request
         CreateFeedbackCommentRequestDto commentRequest = CreateFeedbackCommentRequestDto.builder()
                 .commentId(commentId)
                 .feedbackCommentBody("Excellent performance overall")
