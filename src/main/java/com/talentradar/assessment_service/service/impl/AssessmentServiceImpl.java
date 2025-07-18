@@ -24,6 +24,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -45,22 +47,24 @@ public class AssessmentServiceImpl implements AssessmentService {
         log.info("Starting assessment creation for userId={}", userId);
 
         userSnapshotRepository.findById(userId)
-                .orElseThrow(() -> {
-                    return new ResourceNotFoundException("User with id: " + userId + " not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("User with id: " + userId + " not found"));
 
         validateDimensionDefinitionIds(requestDto.getDimensions());
 
         reSubmissionValidation(userId);
 
+        // Calculate weighted average score
+        int averageScore = calculateWeightedAverageScore(requestDto.getDimensions());
+
         Assessment assessment = Assessment.builder()
                 .userId(userId)
                 .reflection(requestDto.getReflection())
                 .submissionStatus(requestDto.getStatus())
+                .averageScore(averageScore)
                 .build();
 
         Assessment savedAssessment = assessmentRepository.save(assessment);
-        log.info("Assessment saved with id={}", savedAssessment.getId());
+        log.info("Assessment saved with id={} and averageScore={}", savedAssessment.getId(), averageScore);
 
         List<AssessmentDimension> dimensions = requestDto.getDimensions().stream()
                 .map(dim -> {
@@ -79,11 +83,44 @@ public class AssessmentServiceImpl implements AssessmentService {
         return assessmentMapper.toResponseDto(savedAssessment);
     }
 
+    private int calculateWeightedAverageScore(List<DimensionRatingDTO> dimensions) {
+        log.debug("Calculating weighted average score for {} dimensions", dimensions.size());
+
+        BigDecimal totalWeightedScore = BigDecimal.ZERO;
+        BigDecimal totalWeight = BigDecimal.ZERO;
+
+        for (DimensionRatingDTO dimension : dimensions) {
+            DimensionDefinition definition = getDimension(dimension.getDimensionDefinitionId());
+
+            BigDecimal rating = BigDecimal.valueOf(dimension.getRating());
+            BigDecimal weight = definition.getWeight();
+
+            BigDecimal weightedScore = rating.multiply(weight);
+            totalWeightedScore = totalWeightedScore.add(weightedScore);
+            totalWeight = totalWeight.add(weight);
+
+            log.debug("Dimension: {}, Rating: {}, Weight: {}, Weighted Score: {}",
+                    definition.getDimensionName(), rating, weight, weightedScore);
+        }
+
+        if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
+            log.warn("Total weight is zero, returning 0 as average score");
+            return 0;
+        }
+
+        // Calculate weighted average and round to nearest integer
+        BigDecimal weightedAverage = totalWeightedScore.divide(totalWeight, 2, RoundingMode.HALF_UP);
+        int averageScore = weightedAverage.setScale(0, RoundingMode.HALF_UP).intValue();
+
+        log.debug("Total weighted score: {}, Total weight: {}, Average score: {}",
+                totalWeightedScore, totalWeight, averageScore);
+
+        return averageScore;
+    }
+
     private DimensionDefinition getDimension(UUID id) {
         return dimensionDefinitionRepository.findById(id)
-                .orElseThrow(() -> {
-                    return new ResourceNotFoundException("DimensionDefinition with id " + id + " not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("DimensionDefinition with id " + id + " not found"));
     }
 
     @Override
@@ -92,9 +129,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         log.info("Fetching assessments for userId={} with pagination={}", userId, pageable);
 
         userSnapshotRepository.findById(userId)
-                .orElseThrow(() -> {
-                    return new ResourceNotFoundException("User not found with ID: " + userId);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
         Page<Assessment> page = assessmentRepository.findAllByUserId(userId, pageable);
         log.info("Found {} assessments for userId={}", page.getTotalElements(), userId);
