@@ -42,6 +42,7 @@ public class DimensionDefinition {
     @OneToMany(mappedBy = "dimensionDefinition", cascade = CascadeType.ALL)
     private List<FeedbackDimension> feedbackDimensions;
 
+    @Builder.Default
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "dimension_grading_criteria",
