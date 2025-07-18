@@ -18,6 +18,7 @@ import com.talentradar.assessment_service.repository.UserSnapshotRepository;
 import com.talentradar.assessment_service.service.AssessmentService;
 import com.talentradar.assessment_service.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AssessmentServiceImpl implements AssessmentService {
 
     private final AssessmentRepository assessmentRepository;
@@ -40,9 +42,12 @@ public class AssessmentServiceImpl implements AssessmentService {
     @Transactional
     @Override
     public AssessmentResponseDTO createAssessment(AssessmentRequestDTO requestDto, UUID userId) {
+        log.info("Starting assessment creation for userId={}", userId);
 
         userSnapshotRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User with id: " + userId + " not found"));
+                .orElseThrow(() -> {
+                    return new ResourceNotFoundException("User with id: " + userId + " not found");
+                });
 
         validateDimensionDefinitionIds(requestDto.getDimensions());
 
@@ -55,16 +60,20 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .build();
 
         Assessment savedAssessment = assessmentRepository.save(assessment);
+        log.info("Assessment saved with id={}", savedAssessment.getId());
 
         List<AssessmentDimension> dimensions = requestDto.getDimensions().stream()
-                .map(dim -> AssessmentDimension.builder()
-                        .assessment(savedAssessment)
-                        .dimensionDefinition(getDimension(dim.getDimensionDefinitionId()))
-                        .rating(dim.getRating())
-                        .build())
-                .toList();
+                .map(dim -> {
+                    DimensionDefinition definition = getDimension(dim.getDimensionDefinitionId());
+                    return AssessmentDimension.builder()
+                            .assessment(savedAssessment)
+                            .dimensionDefinition(definition)
+                            .rating(dim.getRating())
+                            .build();
+                }).toList();
 
         dimensionRepository.saveAll(dimensions);
+        log.info("Saved {} assessment dimensions for assessmentId={}", dimensions.size(), savedAssessment.getId());
 
         savedAssessment.setDimensions(dimensions);
         return assessmentMapper.toResponseDto(savedAssessment);
@@ -72,17 +81,23 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     private DimensionDefinition getDimension(UUID id) {
         return dimensionDefinitionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("DimensionDefinition with id " + id + " not found"));
+                .orElseThrow(() -> {
+                    return new ResourceNotFoundException("DimensionDefinition with id " + id + " not found");
+                });
     }
-
 
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponseDTO<AssessmentResponseDTO> getAssessmentsByUser(UUID userId, Pageable pageable) {
+        log.info("Fetching assessments for userId={} with pagination={}", userId, pageable);
+
         userSnapshotRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+                .orElseThrow(() -> {
+                    return new ResourceNotFoundException("User not found with ID: " + userId);
+                });
 
         Page<Assessment> page = assessmentRepository.findAllByUserId(userId, pageable);
+        log.info("Found {} assessments for userId={}", page.getTotalElements(), userId);
 
         return PaginationUtil.toPaginatedResponse(
                 page.map(assessmentMapper::toResponseDto)
@@ -95,6 +110,7 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .toList();
 
         List<UUID> existingIds = dimensionDefinitionRepository.findExistingIds(ids);
+        log.debug("Validating dimension IDs. Provided={}, Existing={}", ids.size(), existingIds.size());
 
         if (existingIds.size() != ids.size()) {
             throw new BadRequestException("Some DimensionDefinition IDs are invalid");
@@ -102,16 +118,13 @@ public class AssessmentServiceImpl implements AssessmentService {
     }
 
     private void reSubmissionValidation(UUID userId) {
-        //verify if re-submission is within 30 days
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-
         boolean recentlySubmitted = assessmentRepository
                 .existsByUserIdAndSubmissionStatusAndCreatedAtAfter(userId, SubmissionStatus.SUBMITTED, thirtyDaysAgo);
 
         if (recentlySubmitted) {
+            log.warn("Re-submission attempt within 30 days by userId={}", userId);
             throw new BadRequestException("User has already submitted an assessment within the last 30 days.");
         }
     }
-
 }
-

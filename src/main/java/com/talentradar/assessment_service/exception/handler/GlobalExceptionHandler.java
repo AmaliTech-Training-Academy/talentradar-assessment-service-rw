@@ -69,6 +69,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequestException(BadRequestException ex) {
+        log.error("Bad Request Exception: {}", ex.getMessage());
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.error(ex.getMessage(), "Invalid request"));
@@ -76,6 +77,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFoundException(ResourceNotFoundException ex) {
+        log.error("Resource not found: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ex.getMessage(), "Resource not found"));
@@ -83,6 +85,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateSubmissionException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateSubmission(DuplicateSubmissionException ex) {
+        log.error("Duplicate Submission: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage(), "Duplicate submission"));
