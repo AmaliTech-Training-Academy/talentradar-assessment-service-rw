@@ -27,6 +27,7 @@ public class GradingCriteria {
     @Column(name = "criteria_name", nullable = false)
     private String criteriaName;
 
+    @Builder.Default
     @ManyToMany(mappedBy = "gradingCriteriaSet")
     private Set<DimensionDefinition> dimensionDefinitions = new HashSet<>();
 }
