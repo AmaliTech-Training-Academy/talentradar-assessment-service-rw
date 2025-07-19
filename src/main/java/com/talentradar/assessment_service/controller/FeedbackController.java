@@ -1,16 +1,21 @@
 package com.talentradar.assessment_service.controller;
 
 import com.talentradar.assessment_service.dto.api.ApiResponse;
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
 import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
 import com.talentradar.assessment_service.dto.comment.response.CommentDto;
 import com.talentradar.assessment_service.dto.feedback.request.CreateCompleteFeedbackDto;
+import com.talentradar.assessment_service.dto.feedback.request.FeedbackSearchCriteria;
 import com.talentradar.assessment_service.dto.feedback.response.FeedbackDto;
 import com.talentradar.assessment_service.service.CommentService;
 import com.talentradar.assessment_service.service.FeedbackService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,11 +30,11 @@ public class FeedbackController {
     private final CommentService commentService;
 
     // ============= FEEDBACK ENDPOINTS =============
-
+    @PreAuthorize("hasRole('MANAGER')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<FeedbackDto>>> getAllFeedback() {
         List<FeedbackDto> feedback = feedbackService.getAllFeedback();
-        return ResponseEntity.ok(ApiResponse.success(feedback, "Feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feedback, "Feedbacks and retrieved successfully"));
     }
 
     @GetMapping("/{id}")
@@ -154,5 +159,13 @@ public class FeedbackController {
     public ResponseEntity<ApiResponse<Void>> deleteCommentTemplate(@PathVariable UUID id) {
         commentService.deleteComment(id);
         return ResponseEntity.ok(ApiResponse.success("Comment template deleted successfully"));
+    }
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('DEVELOPER')")
+    public ResponseEntity<ApiResponse<PaginatedResponseDTO<FeedbackDto>>> searchFeedbacks(
+            @ParameterObject FeedbackSearchCriteria criteria,
+            @ParameterObject Pageable pageable) {
+        PaginatedResponseDTO<FeedbackDto> feedbacks = feedbackService.searchFeedbacks(criteria, pageable);
+        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Feedbacks retrieved successfully"));
     }
 }

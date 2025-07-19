@@ -1,19 +1,25 @@
 package com.talentradar.assessment_service.service.impl;
 
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
 import com.talentradar.assessment_service.dto.feedback.request.CreateCompleteFeedbackDto;
+import com.talentradar.assessment_service.dto.feedback.request.FeedbackSearchCriteria;
 import com.talentradar.assessment_service.dto.feedback.response.FeedbackDto;
 import com.talentradar.assessment_service.dto.feedbackComment.request.CreateFeedbackCommentDto;
 import com.talentradar.assessment_service.dto.feedbackComment.response.FeedbackCommentDto;
 import com.talentradar.assessment_service.dto.feedbackDimension.request.CreateFeedbackDimensionDto;
 import com.talentradar.assessment_service.dto.feedbackDimension.response.FeedbackDimensionDto;
+import com.talentradar.assessment_service.event.producer.FeedbackEventProducer;
 import com.talentradar.assessment_service.exception.FeedbackNotFoundException;
 import com.talentradar.assessment_service.model.Feedback;
 import com.talentradar.assessment_service.repository.FeedbackRepository;
 import com.talentradar.assessment_service.service.FeedbackCommentService;
 import com.talentradar.assessment_service.service.FeedbackDimensionService;
 import com.talentradar.assessment_service.service.FeedbackService;
+import com.talentradar.assessment_service.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +37,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final FeedbackDimensionService feedbackDimensionService;
     private final FeedbackCommentService feedbackCommentService;
+    private final FeedbackEventProducer feedbackEventProducer;
 
     @Override
     @Transactional(readOnly = true)
@@ -88,7 +95,18 @@ public class FeedbackServiceImpl implements FeedbackService {
     public void deleteFeedback(UUID id) {
         Feedback feedback = feedbackRepository.findById(id)
                 .orElseThrow(() -> new FeedbackNotFoundException("Feedback not found with id: " + id));
+
         feedbackRepository.delete(feedback);
+
+        // Publish feedback deleted event
+        try {
+            feedbackEventProducer.publishFeedbackDeleted(feedback);
+            log.info("Feedback deleted event published successfully for feedbackId={}", id);
+        } catch (Exception e) {
+            log.error("Failed to publish feedback deleted event for feedbackId={}: {}",
+                    id, e.getMessage(), e);
+            // Don't fail the transaction if event publishing fails
+        }
     }
 
     @Override
@@ -119,6 +137,18 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .build();
 
         Feedback savedFeedback = feedbackRepository.save(feedback);
+
+        // Publish feedback version created event
+        try {
+            feedbackEventProducer.publishFeedbackVersionCreated(savedFeedback);
+            log.info("Feedback version created event published successfully for feedbackId={}",
+                    savedFeedback.getId());
+        } catch (Exception e) {
+            log.error("Failed to publish feedback version created event for feedbackId={}: {}",
+                    savedFeedback.getId(), e.getMessage(), e);
+            // Don't fail the transaction if event publishing fails
+        }
+
         return mapToDto(savedFeedback);
     }
 
@@ -135,10 +165,19 @@ public class FeedbackServiceImpl implements FeedbackService {
         log.info("Creating complete feedback for manager: {} and developer: {}",
                 createDto.getManagerId(), createDto.getDeveloperId());
 
+        // Calculate the next version number based on existing feedback between this manager and developer
+        int nextVersion = feedbackRepository.findTopByManagerIdAndDeveloperIdOrderByFeedbackVersionDesc(
+                        createDto.getManagerId(), createDto.getDeveloperId())
+                .map(existingFeedback -> existingFeedback.getFeedbackVersion() + 1)
+                .orElse(1); // First feedback starts at version 1
+
+        log.info("Calculated feedback version: {} for manager: {} and developer: {}",
+                nextVersion, createDto.getManagerId(), createDto.getDeveloperId());
+
         Feedback feedback = Feedback.builder()
                 .managerId(createDto.getManagerId())
                 .developerId(createDto.getDeveloperId())
-                .feedbackVersion(createDto.getFeedbackVersion())
+                .feedbackVersion(nextVersion)
                 .build();
 
         Feedback savedFeedback = feedbackRepository.save(feedback);
@@ -173,6 +212,17 @@ public class FeedbackServiceImpl implements FeedbackService {
         }
 
         log.info("Created {} feedback comments", commentDtos.size());
+
+        // Publish feedback created event
+        try {
+            feedbackEventProducer.publishFeedbackCreated(savedFeedback);
+            log.info("Feedback created event published successfully for feedbackId={}",
+                    savedFeedback.getId());
+        } catch (Exception e) {
+            log.error("Failed to publish feedback created event for feedbackId={}: {}",
+                    savedFeedback.getId(), e.getMessage(), e);
+            // Don't fail the transaction if event publishing fails
+        }
 
         return FeedbackDto.builder()
                 .id(savedFeedback.getId())
@@ -221,6 +271,16 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         Feedback updatedFeedback = feedbackRepository.save(feedback);
 
+        // Publish feedback updated event
+        try {
+            feedbackEventProducer.publishFeedbackUpdated(updatedFeedback);
+            log.info("Feedback updated event published successfully for feedbackId={}", id);
+        } catch (Exception e) {
+            log.error("Failed to publish feedback updated event for feedbackId={}: {}",
+                    id, e.getMessage(), e);
+            // Don't fail the transaction if event publishing fails
+        }
+
         return getCompleteFeedback(updatedFeedback.getId());
     }
 
@@ -254,5 +314,27 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .dimensions(dimensions)
                 .feedbackComments(comments)
                 .build();
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponseDTO<FeedbackDto> searchFeedbacks(FeedbackSearchCriteria criteria, Pageable pageable) {
+        log.info("Searching feedbacks with criteria: managerId={}, developerId={}, version={}, createdAfter={}, createdBefore={}",
+                criteria.getManagerId(), criteria.getDeveloperId(), criteria.getFeedbackVersion(),
+                criteria.getCreatedAfter(), criteria.getCreatedBefore());
+
+        Page<Feedback> feedbackPage = feedbackRepository.searchFeedbacks(
+                criteria.getManagerId(),
+                criteria.getDeveloperId(),
+                criteria.getFeedbackVersion(),
+                criteria.getCreatedAfter(),
+                criteria.getCreatedBefore(),
+                pageable
+        );
+
+        log.info("Found {} feedbacks matching criteria", feedbackPage.getTotalElements());
+
+        return PaginationUtil.toPaginatedResponse(
+                feedbackPage.map(this::mapToDto)
+        );
     }
 }
