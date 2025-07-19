@@ -60,16 +60,19 @@ jobs:
 
       - name: Build and push image
         run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          UNIQUE_TAG="${ENV_NAME}-${TIMESTAMP}-${COMMIT_SHA}"
-
-          echo "Building image: $ECR_REGISTRY/$ECR_REPOSITORY:$UNIQUE_TAG"
+          # Extract service name from repository name (remove talentradar- prefix and -rw suffix)
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | sed 's/talentradar-//' | sed 's/-rw$//' | tr '_' '-')
           
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$UNIQUE_TAG \
+          # Build simple service name for image
+          SERVICE_NAME="${REPO_NAME}:latest"
+          
+          echo "Building image: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
             --build-arg SPRING_PROFILES_ACTIVE=$ENV_NAME .
 
           echo "Pushing image to ECR..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$UNIQUE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-          echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$UNIQUE_TAG"
+          echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
