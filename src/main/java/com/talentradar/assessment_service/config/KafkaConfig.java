@@ -32,6 +32,7 @@ public class KafkaConfig {
     // Topics
     public static final String USER_EVENTS_TOPIC = "user-management-events";
     public static final String ASSESSMENT_EVENTS_TOPIC = "assessment-events";
+    public static final String FEEDBACK_EVENTS_TOPIC = "feedback-events";
 
     // Producer Configuration
     @Bean
@@ -87,6 +88,13 @@ public class KafkaConfig {
     @Bean
     public NewTopic assessmentEventsTopic() {
         return TopicBuilder.name(ASSESSMENT_EVENTS_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+    @Bean
+    public NewTopic feedbackEventsTopic() {
+        return TopicBuilder.name(FEEDBACK_EVENTS_TOPIC)
                 .partitions(3)
                 .replicas(1)
                 .build();
