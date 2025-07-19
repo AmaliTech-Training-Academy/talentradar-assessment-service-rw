@@ -25,7 +25,6 @@ public class CreateCompleteFeedbackDto {
     @NotNull(message = "Developer ID is required")
     private UUID developerId;
     
-    @Min(value = 1, message = "Feedback version must be at least 1")
     private int feedbackVersion = 1;
     
     @NotEmpty(message = "Dimensions are required")

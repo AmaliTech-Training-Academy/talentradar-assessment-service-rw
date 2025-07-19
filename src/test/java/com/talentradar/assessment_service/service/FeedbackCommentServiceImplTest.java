@@ -1,6 +1,5 @@
 package com.talentradar.assessment_service.service;
 
-import com.talentradar.assessment_service.dto.comment.response.CommentDto;
 import com.talentradar.assessment_service.dto.feedbackComment.request.CreateFeedbackCommentDto;
 import com.talentradar.assessment_service.dto.feedbackComment.response.FeedbackCommentDto;
 import com.talentradar.assessment_service.exception.CommentNotFoundException;
@@ -149,7 +148,7 @@ class FeedbackCommentServiceImplTest {
         // Given
         FeedbackComment mockFeedbackComment = FeedbackComment.builder().id(feedbackId).build();
         List<FeedbackComment> feedbackComments = Arrays.asList(sampleFeedbackComment);
-        when(feedbackCommentRepository.findByFeedbackId(mockFeedbackComment)).thenReturn(feedbackComments);
+        when(feedbackCommentRepository.findByFeedbackId(feedbackId)).thenReturn(feedbackComments);
 
         // When
         List<FeedbackCommentDto> result = feedbackCommentService.getFeedbackCommentsByFeedbackId(feedbackId);
@@ -162,7 +161,7 @@ class FeedbackCommentServiceImplTest {
         assertThat(result.get(0).getComment().getCommentTitle()).isEqualTo("Key Strengths & Achievements");
         assertThat(result.get(0).getFeedbackCommentBody()).isEqualTo("Demonstrates excellent problem-solving skills and leadership qualities");
 
-        verify(feedbackCommentRepository).findByFeedbackId(any(FeedbackComment.class));
+        verify(feedbackCommentRepository).findByFeedbackId(feedbackId);
     }
 
     @Test
@@ -170,14 +169,14 @@ class FeedbackCommentServiceImplTest {
     void getFeedbackCommentsByFeedbackId_ShouldReturnEmptyList_WhenNoCommentsExist() {
         // Given
         FeedbackComment mockFeedbackComment = FeedbackComment.builder().id(feedbackId).build();
-        when(feedbackCommentRepository.findByFeedbackId(mockFeedbackComment)).thenReturn(Collections.emptyList());
+        when(feedbackCommentRepository.findByFeedbackId(feedbackId)).thenReturn(Collections.emptyList());
 
         // When
         List<FeedbackCommentDto> result = feedbackCommentService.getFeedbackCommentsByFeedbackId(feedbackId);
 
         // Then
         assertThat(result).isEmpty();
-        verify(feedbackCommentRepository).findByFeedbackId(any(FeedbackComment.class));
+        verify(feedbackCommentRepository).findByFeedbackId(feedbackId);
     }
 
     @Test
@@ -193,7 +192,7 @@ class FeedbackCommentServiceImplTest {
         assertThat(result.getId()).isEqualTo(feedbackCommentId);
         assertThat(result.getFeedbackId()).isEqualTo(feedbackId);
         assertThat(result.getFeedbackCommentBody()).isEqualTo("Demonstrates excellent problem-solving skills and leadership qualities");
-        
+
         assertThat(result.getComment()).isNotNull();
         assertThat(result.getComment().getId()).isEqualTo(commentId);
         assertThat(result.getComment().getCommentTitle()).isEqualTo("Key Strengths & Achievements");
@@ -203,11 +202,11 @@ class FeedbackCommentServiceImplTest {
     @DisplayName("Should handle null feedback comments list gracefully")
     void getFeedbackCommentsByFeedbackId_ShouldHandleNullGracefully() {
         FeedbackComment mockFeedbackComment = FeedbackComment.builder().id(feedbackId).build();
-        when(feedbackCommentRepository.findByFeedbackId(mockFeedbackComment)).thenReturn(null);
+        when(feedbackCommentRepository.findByFeedbackId(feedbackId)).thenReturn(null);
 
         assertThatThrownBy(() -> feedbackCommentService.getFeedbackCommentsByFeedbackId(feedbackId))
                 .isInstanceOf(NullPointerException.class);
 
-        verify(feedbackCommentRepository).findByFeedbackId(any(FeedbackComment.class));
+        verify(feedbackCommentRepository).findByFeedbackId(feedbackId);
     }
 }

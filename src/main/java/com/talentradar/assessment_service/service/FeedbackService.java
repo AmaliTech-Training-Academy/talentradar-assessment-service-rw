@@ -1,7 +1,11 @@
 package com.talentradar.assessment_service.service;
 
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
 import com.talentradar.assessment_service.dto.feedback.request.CreateCompleteFeedbackDto;
+import com.talentradar.assessment_service.dto.feedback.request.FeedbackSearchCriteria;
 import com.talentradar.assessment_service.dto.feedback.response.FeedbackDto;
+import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,4 +26,7 @@ public interface FeedbackService {
     FeedbackDto createCompleteFeedback(CreateCompleteFeedbackDto createDto);
     FeedbackDto getCompleteFeedback(UUID id);
     FeedbackDto updateCompleteFeedback(UUID id, CreateCompleteFeedbackDto updateDto);
+
+    @Transactional(readOnly = true)
+    PaginatedResponseDTO<FeedbackDto> searchFeedbacks(FeedbackSearchCriteria criteria, Pageable pageable);
 }
