@@ -4,6 +4,7 @@ import com.talentradar.assessment_service.dto.assessment.request.AssessmentReque
 import com.talentradar.assessment_service.dto.assessment.request.DimensionRatingDTO;
 import com.talentradar.assessment_service.dto.assessment.response.AssessmentResponseDTO;
 import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
+import com.talentradar.assessment_service.event.producer.AssessmentEventProducer;
 import com.talentradar.assessment_service.exception.BadRequestException;
 import com.talentradar.assessment_service.exception.ResourceNotFoundException;
 import com.talentradar.assessment_service.mapper.AssessmentMapper;
@@ -57,6 +58,9 @@ class AssessmentServiceImplTest {
 
     @Mock
     private UserSnapshotRepository userSnapshotRepository;
+
+    @Mock(lenient = true) // 👈 prevents unnecessary stubbing errors in tests that don’t hit the producer
+    private AssessmentEventProducer assessmentEventProducer;
 
     private UUID userId;
     private UUID dimensionId1;
