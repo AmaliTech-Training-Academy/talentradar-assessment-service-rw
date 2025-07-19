@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/feedbacks")
+@RequestMapping("/api/v1/feedbacks")
 @RequiredArgsConstructor
 public class FeedbackController {
 

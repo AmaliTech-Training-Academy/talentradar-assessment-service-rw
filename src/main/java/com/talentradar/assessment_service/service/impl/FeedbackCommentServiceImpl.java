@@ -4,7 +4,6 @@ import com.talentradar.assessment_service.dto.comment.response.CommentDto;
 import com.talentradar.assessment_service.dto.feedbackComment.request.CreateFeedbackCommentDto;
 import com.talentradar.assessment_service.dto.feedbackComment.response.FeedbackCommentDto;
 import com.talentradar.assessment_service.exception.CommentNotFoundException;
-import com.talentradar.assessment_service.exception.FeedbackCommentNotFoundException;
 import com.talentradar.assessment_service.exception.FeedbackNotFoundException;
 import com.talentradar.assessment_service.model.Comment;
 import com.talentradar.assessment_service.model.Feedback;
@@ -35,7 +34,7 @@ public class FeedbackCommentServiceImpl implements FeedbackCommentService {
     @Override
     @Transactional(readOnly = true)
     public List<FeedbackCommentDto> getFeedbackCommentsByFeedbackId(UUID feedbackId) {
-        return feedbackCommentRepository.findByFeedbackId(FeedbackComment.builder().id(feedbackId).build())
+        return feedbackCommentRepository.findByFeedbackId(feedbackId)
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
