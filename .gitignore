@@ -54,3 +54,6 @@ target/
 
 ## Environment Variable ##
 .env
+
+## docker-compose ##
+docker-compose.yml
