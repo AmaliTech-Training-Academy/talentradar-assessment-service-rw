@@ -121,7 +121,7 @@ class AssessmentServiceImplTest {
     @Test
     void shouldCreateAssessmentSuccessfully() {
         // Arrange
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.of(new UserSnapshot()));
 
         when(assessmentRepository.existsByUserIdAndSubmissionStatusAndCreatedAtAfter(
@@ -160,7 +160,7 @@ class AssessmentServiceImplTest {
         verify(assessmentRepository).save(argThat(savedAssessment ->
                 savedAssessment.getAverageScore() == 4)); // Expected: (4*0.25 + 3*0.20) / 0.45 = 3.56 ≈ 4
 
-        verify(userSnapshotRepository).findById(userId);
+        verify(userSnapshotRepository).findByUserId(userId);
         verify(dimensionRepository).saveAll(anyList());
         verify(assessmentMapper).toResponseDto(any(Assessment.class));
     }
@@ -183,7 +183,7 @@ class AssessmentServiceImplTest {
         dimensionDefinition1.setWeight(new BigDecimal("0.30")); // 30%
         dimensionDefinition2.setWeight(new BigDecimal("0.70")); // 70%
 
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.of(new UserSnapshot()));
 
         when(assessmentRepository.existsByUserIdAndSubmissionStatusAndCreatedAtAfter(
@@ -219,7 +219,7 @@ class AssessmentServiceImplTest {
     @Test
     void shouldThrowBadRequestForInvalidDimensionId() {
         // Arrange
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.of(new UserSnapshot()));
 
         when(dimensionDefinitionRepository.findExistingIds(List.of(dimensionId1, dimensionId2)))
@@ -233,7 +233,7 @@ class AssessmentServiceImplTest {
     @Test
     void shouldThrowResourceNotFoundIfDimensionMissing() {
         // Arrange
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.of(new UserSnapshot()));
 
         when(dimensionDefinitionRepository.findExistingIds(List.of(dimensionId1, dimensionId2)))
@@ -262,7 +262,7 @@ class AssessmentServiceImplTest {
     @Test
     void shouldThrowBadRequestIfUserSubmittedWithin30Days() {
         // Arrange
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.of(new UserSnapshot()));
 
         when(dimensionDefinitionRepository.findExistingIds(List.of(dimensionId1, dimensionId2)))
@@ -287,10 +287,10 @@ class AssessmentServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         List<Assessment> assessments = List.of(assessment);
 
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.of(new UserSnapshot()));
 
-        when(assessmentRepository.findAllByUserId(userId, pageable))
+        when(assessmentRepository.findAllByUserIdWithDimensions(userId, pageable))
                 .thenReturn(new PageImpl<>(assessments));
 
         when(assessmentMapper.toResponseDto(any(Assessment.class)))
@@ -304,7 +304,7 @@ class AssessmentServiceImplTest {
         assertEquals(1, result.getContent().size());
         assertEquals(userId, result.getContent().getFirst().getUserId());
         assertEquals(4, result.getContent().getFirst().getAverage());
-        verify(assessmentRepository).findAllByUserId(userId, pageable);
+        verify(assessmentRepository).findAllByUserIdWithDimensions(userId, pageable);
         verify(assessmentMapper).toResponseDto(any(Assessment.class));
     }
 
@@ -313,7 +313,7 @@ class AssessmentServiceImplTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.empty());
 
         // Act & Assert
@@ -321,7 +321,7 @@ class AssessmentServiceImplTest {
                 () -> assessmentService.getAssessmentsByUser(userId, pageable));
 
         assertEquals("User not found with ID: " + userId, exception.getMessage());
-        verify(userSnapshotRepository).findById(userId);
+        verify(userSnapshotRepository).findByUserId(userId);
         verifyNoInteractions(assessmentRepository, assessmentMapper);
     }
 
@@ -331,7 +331,7 @@ class AssessmentServiceImplTest {
         dimensionDefinition1.setWeight(BigDecimal.ZERO);
         dimensionDefinition2.setWeight(BigDecimal.ZERO);
 
-        when(userSnapshotRepository.findById(userId))
+        when(userSnapshotRepository.findByUserId(userId))
                 .thenReturn(Optional.of(new UserSnapshot()));
 
         when(assessmentRepository.existsByUserIdAndSubmissionStatusAndCreatedAtAfter(
