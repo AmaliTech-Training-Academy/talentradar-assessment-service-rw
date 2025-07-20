@@ -12,6 +12,7 @@ import com.talentradar.assessment_service.event.producer.FeedbackEventProducer;
 import com.talentradar.assessment_service.exception.FeedbackNotFoundException;
 import com.talentradar.assessment_service.model.Feedback;
 import com.talentradar.assessment_service.repository.FeedbackRepository;
+import com.talentradar.assessment_service.repository.specification.FeedbackSpecification;
 import com.talentradar.assessment_service.service.FeedbackCommentService;
 import com.talentradar.assessment_service.service.FeedbackDimensionService;
 import com.talentradar.assessment_service.service.FeedbackService;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -322,14 +324,8 @@ public class FeedbackServiceImpl implements FeedbackService {
                 criteria.getManagerId(), criteria.getDeveloperId(), criteria.getFeedbackVersion(),
                 criteria.getCreatedAfter(), criteria.getCreatedBefore());
 
-        Page<Feedback> feedbackPage = feedbackRepository.searchFeedbacks(
-                criteria.getManagerId(),
-                criteria.getDeveloperId(),
-                criteria.getFeedbackVersion(),
-                criteria.getCreatedAfter(),
-                criteria.getCreatedBefore(),
-                pageable
-        );
+        Specification<Feedback> specification = FeedbackSpecification.createSpecification(criteria);
+        Page<Feedback> feedbackPage = feedbackRepository.findAll(specification, pageable);
 
         log.info("Found {} feedbacks matching criteria", feedbackPage.getTotalElements());
 
