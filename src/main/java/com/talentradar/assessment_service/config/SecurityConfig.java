@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -44,7 +44,7 @@ public class SecurityConfig {
                             response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"You don't have permission to access this resource\"}");
                         })
                 )
-                .addFilterBefore(userContextFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(userContextFilter, BasicAuthenticationFilter.class);
 
         return http.build();
     }
