@@ -42,7 +42,7 @@ public class AssessmentController {
             @RequestHeader("X-User-Id") UUID userId,
             @ParameterObject Pageable pageable) {
 
-        PaginatedResponseDTO<AssessmentResponseDTO> pagedAssessments = assessmentService.getAssessmentsByUser(userId, pageable);
+        PaginatedResponseDTO<AssessmentResponseDTO> pagedAssessments = assessmentService.getAllAssessmentsByUser(userId, pageable);
         return ResponseEntity.ok(ApiResponse.success(pagedAssessments));
     }
 
