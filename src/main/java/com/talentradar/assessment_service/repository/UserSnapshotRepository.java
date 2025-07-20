@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface UserSnapshotRepository extends JpaRepository<UserSnapshot, UUID> {
     Optional<UserSnapshot> findByUserId(UUID userId);
+
 }
