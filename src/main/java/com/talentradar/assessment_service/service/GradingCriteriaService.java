@@ -8,38 +8,17 @@ import java.util.UUID;
 
 public interface GradingCriteriaService {
     
-    /**
-     * Get all grading criteria
-     */
     List<GradingCriteriaDto> getAllGradingCriteria();
     
-    /**
-     * Get grading criteria by ID
-     */
     GradingCriteriaDto getGradingCriteriaById(UUID id);
     
-    /**
-     * Create new grading criteria
-     */
     GradingCriteriaDto createGradingCriteria(CreateGradingCriteriaDto createDto);
     
-    /**
-     * Update existing grading criteria
-     */
     GradingCriteriaDto updateGradingCriteria(UUID id, UpdateGradingCriteriaDto updateDto);
     
-    /**
-     * Delete grading criteria
-     */
     void deleteGradingCriteria(UUID id);
     
-    /**
-     * Check if grading criteria exists
-     */
     boolean gradingCriteriaExists(UUID id);
     
-    /**
-     * Get multiple grading criteria by IDs (for batch operations)
-     */
     List<GradingCriteriaDto> getGradingCriteriaByIds(List<UUID> ids);
 }

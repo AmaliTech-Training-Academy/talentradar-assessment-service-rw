@@ -1,7 +1,9 @@
 package com.talentradar.assessment_service.config;
 
+import com.talentradar.assessment_service.model.Comment;
 import com.talentradar.assessment_service.model.DimensionDefinition;
 import com.talentradar.assessment_service.model.GradingCriteria;
+import com.talentradar.assessment_service.repository.CommentRepository;
 import com.talentradar.assessment_service.repository.DimensionDefinitionRepository;
 import com.talentradar.assessment_service.repository.GradingCriteriaRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +24,15 @@ public class DataInitializer implements CommandLineRunner {
 
     private final DimensionDefinitionRepository dimensionDefinitionRepository;
     private final GradingCriteriaRepository gradingCriteriaRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     @Transactional
     public void run(String... args) {
         if (dimensionDefinitionRepository.count() == 0) {
-            log.info("Initializing dimension definitions and grading criteria...");
+            log.info("Initializing dimension definitions and grading criteria and comments...");
             initializeDimensionsAndCriteria();
+            initializeCommentTemplates();
             log.info("Data initialization completed successfully!");
         } else {
             log.info("Data already exists. Skipping initialization.");
@@ -160,5 +164,27 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         log.info("Created dimension definition: {} with {} criteria", name, criteria.size());
+    }
+    private void initializeCommentTemplates() {
+        List<String> commentTitles = List.of(
+                "Key Strengths & Achievements",
+                "Development Opportunities",
+                "Development Goals & Action Plan",
+                "Overall Performance Summary"
+        );
+
+        for (String commentTitle : commentTitles) {
+            // Check if comment template already exists to avoid duplicates
+            if (commentRepository.findByCommentTitle(commentTitle).isEmpty()) {
+                Comment comment = Comment.builder()
+                        .commentTitle(commentTitle)
+                        .build();
+
+                Comment savedComment = commentRepository.save(comment);
+                log.info("Created comment template: {}", commentTitle);
+            } else {
+                log.debug("Comment template already exists: {}", commentTitle);
+            }
+        }
     }
 }
