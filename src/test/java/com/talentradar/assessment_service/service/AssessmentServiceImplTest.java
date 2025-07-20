@@ -301,7 +301,7 @@ class AssessmentServiceImplTest {
                 .thenReturn(responseDto);
 
         // Act
-        PaginatedResponseDTO<AssessmentResponseDTO> result = assessmentService.getAssessmentsByUser(userId, pageable);
+        PaginatedResponseDTO<AssessmentResponseDTO> result = assessmentService.getAllAssessmentsByUser(userId, pageable);
 
         // Assert
         assertNotNull(result);
@@ -322,7 +322,7 @@ class AssessmentServiceImplTest {
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> assessmentService.getAssessmentsByUser(userId, pageable));
+                () -> assessmentService.getAllAssessmentsByUser(userId, pageable));
 
         assertEquals("User not found with ID: " + userId, exception.getMessage());
         verify(userSnapshotRepository).findByUserId(userId);
