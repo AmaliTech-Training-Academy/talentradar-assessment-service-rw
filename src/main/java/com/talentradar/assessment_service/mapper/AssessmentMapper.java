@@ -17,7 +17,9 @@ public interface AssessmentMapper {
     @Mapping(source = "averageScore", target = "average")
     AssessmentResponseDTO toResponseDto(Assessment entity);
 
+    @Mapping(source = "assessment.id", target = "assessmentId")
+    @Mapping(source = "dimensionDefinition.id", target = "dimensionDefinitionId")
     DimensionResponseDTO toDimensionDto(AssessmentDimension dimension);
-    List<DimensionResponseDTO> toDimensionDtoList(List<AssessmentDimension> dimensions);
 
+    List<DimensionResponseDTO> toDimensionDtoList(List<AssessmentDimension> dimensions);
 }
