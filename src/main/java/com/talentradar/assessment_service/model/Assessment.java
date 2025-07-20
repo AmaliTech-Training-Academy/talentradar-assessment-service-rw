@@ -37,13 +37,22 @@ public class Assessment {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reflection;
 
-    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL)
     private List<AssessmentDimension> dimensions;
+
+    @PrePersist
+    protected void OnCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 
