@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public interface AssessmentService {
     AssessmentResponseDTO createAssessment(AssessmentRequestDTO requestDto, UUID userId);
+
     PaginatedResponseDTO<AssessmentResponseDTO> getAllAssessmentsByUser(UUID userId, Pageable pageable);
 
 
