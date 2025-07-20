@@ -46,7 +46,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     public AssessmentResponseDTO createAssessment(AssessmentRequestDTO requestDto, UUID userId) {
         log.info("Starting assessment creation for userId={}", userId);
 
-        userSnapshotRepository.findById(userId)
+        userSnapshotRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id: " + userId + " not found"));
 
         validateDimensionDefinitionIds(requestDto.getDimensions());
@@ -125,13 +125,13 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PaginatedResponseDTO<AssessmentResponseDTO> getAssessmentsByUser(UUID userId, Pageable pageable) {
+    public PaginatedResponseDTO<AssessmentResponseDTO> getAllAssessmentsByUser(UUID userId, Pageable pageable) {
         log.info("Fetching assessments for userId={} with pagination={}", userId, pageable);
 
-        userSnapshotRepository.findById(userId)
+        userSnapshotRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
-        Page<Assessment> page = assessmentRepository.findAllByUserId(userId, pageable);
+        Page<Assessment> page = assessmentRepository.findAllByUserIdWithDimensions(userId, pageable);
         log.info("Found {} assessments for userId={}", page.getTotalElements(), userId);
 
         return PaginationUtil.toPaginatedResponse(
