@@ -4,7 +4,8 @@ import com.talentradar.assessment_service.dto.assessment.request.AssessmentReque
 import com.talentradar.assessment_service.dto.assessment.request.DimensionRatingDTO;
 import com.talentradar.assessment_service.dto.assessment.response.AssessmentResponseDTO;
 import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
-import com.talentradar.assessment_service.event.producer.AssessmentEventProducer;
+//import com.talentradar.assessment_service.event.producer.AssessmentEventProducer;
+import com.talentradar.assessment_service.event.rabbit.producer.AssessmentEventProducer;
 import com.talentradar.assessment_service.exception.BadRequestException;
 import com.talentradar.assessment_service.exception.ResourceNotFoundException;
 import com.talentradar.assessment_service.mapper.AssessmentMapper;
@@ -48,8 +49,6 @@ public class AssessmentServiceImpl implements AssessmentService {
     public AssessmentResponseDTO createAssessment(AssessmentRequestDTO requestDto, UUID userId) {
         log.info("Starting assessment creation for userId={}", userId);
 
-        userSnapshotRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User with id: " + userId + " not found"));
 
         validateDimensionDefinitionIds(requestDto.getDimensions());
 
@@ -140,9 +139,6 @@ public class AssessmentServiceImpl implements AssessmentService {
     @Transactional(readOnly = true)
     public PaginatedResponseDTO<AssessmentResponseDTO> getAllAssessmentsByUser(UUID userId, Pageable pageable) {
         log.info("Fetching assessments for userId={} with pagination={}", userId, pageable);
-
-        userSnapshotRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
         Page<Assessment> page = assessmentRepository.findAllByUserIdWithDimensions(userId, pageable);
         log.info("Found {} assessments for userId={}", page.getTotalElements(), userId);

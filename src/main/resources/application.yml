@@ -8,22 +8,42 @@ spring:
     config:
       uri: ${SPRING_CLOUD_CONFIG_URI}
 
-  # Add these properties to your application.yml or application.properties
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP-SERVERS}
-    consumer:
-      group-id: assessment-service
-      auto-offset-reset: earliest
-      enable-auto-commit: false
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-        spring.json.value.default.type: java.util.Map
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all
-      retries: 3
-      properties:
-        enable.idempotence: true
+#  # Add these properties to your application.yml or application.properties
+#  kafka:
+#    bootstrap-servers: ${KAFKA_BOOTSTRAP-SERVERS}
+#    consumer:
+#      group-id: assessment-service
+#      auto-offset-reset: earliest
+#      enable-auto-commit: false
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+#      properties:
+#        spring.json.trusted.packages: "*"
+#        spring.json.value.default.type: java.util.Map
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+#      acks: all
+#      retries: 3
+#      properties:
+#        enable.idempotence: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VIRTUAL_HOST:/}
+    connection-timeout: 60000
+    # Publisher confirms for reliability
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    # Consumer settings
+    listener:
+      simple:
+        acknowledge-mode: manual
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+          multiplier: 2
+        default-requeue-rejected: false
