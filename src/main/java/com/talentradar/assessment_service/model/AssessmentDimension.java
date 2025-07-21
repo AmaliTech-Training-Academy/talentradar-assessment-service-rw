@@ -35,7 +35,11 @@ public class AssessmentDimension {
 
     private int rating;
 
-    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void OnCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
 
