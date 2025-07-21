@@ -75,4 +75,3 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
           echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
-
