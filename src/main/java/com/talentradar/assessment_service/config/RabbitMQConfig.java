@@ -20,6 +20,7 @@ public class RabbitMQConfig {
     public static final String ASSESSMENT_EVENTS_EXCHANGE = "assessment.events.exchange";
     public static final String FEEDBACK_EVENTS_EXCHANGE = "feedback.events.exchange";
     public static final String NOTIFICATION_EVENTS_EXCHANGE = "notification.events.exchange";
+    public static final String ANALYSIS_EVENTS_EXCHANGE = "analysis.events.exchange";
 
     // Queue names
     public static final String USER_EVENTS_QUEUE = "user.events.queue";
@@ -27,6 +28,7 @@ public class RabbitMQConfig {
     public static final String FEEDBACK_EVENTS_QUEUE = "feedback.events.queue";
     public static final String FEEDBACK_SUBMITTED_QUEUE = "feedback.submitted.queue";
     public static final String ASSESSMENT_SUBMITTED_QUEUE = "assessment.submitted.queue";
+    public static final String ANALYSIS_QUEUE = "analysis.queue";
 
     // Routing keys
     public static final String USER_CREATED_KEY = "user-created";
@@ -36,6 +38,7 @@ public class RabbitMQConfig {
     public static final String FEEDBACK_CREATED_KEY = "feedback.created";
     public static final String FEEDBACK_UPDATED_KEY = "feedback.updated";
     public static final String FEEDBACK_DELETED_KEY = "feedback.deleted";
+    public static final String FEEDBACK_SUBMITTED_KEY = "feedback.submitted";
 
     // Message converter
     @Bean
@@ -105,6 +108,13 @@ public class RabbitMQConfig {
                 .build();
     }
 
+    @Bean
+    public TopicExchange analysisEventsExchange() {
+        return ExchangeBuilder.topicExchange(ANALYSIS_EVENTS_EXCHANGE)
+                .durable(true)
+                .build();
+    }
+
     // ============= QUEUES =============
 
     @Bean
@@ -134,6 +144,12 @@ public class RabbitMQConfig {
     @Bean
     public Queue assessmentSubmittedQueue() {
         return QueueBuilder.durable(ASSESSMENT_SUBMITTED_QUEUE)
+                .build();
+    }
+
+    @Bean
+    public Queue analysisQueue() {
+        return QueueBuilder.durable(ANALYSIS_QUEUE)
                 .build();
     }
 
@@ -173,6 +189,14 @@ public class RabbitMQConfig {
                 .to(notificationEventsExchange())
                 .with(ASSESSMENT_SUBMITTED_KEY);
     }
+
+    @Bean
+    public Binding analysisBinding() {
+        return BindingBuilder.bind(analysisQueue())
+                .to(analysisEventsExchange())
+                .with(FEEDBACK_SUBMITTED_KEY);
+    }
+
     @Bean
     public Queue userCreatedQueue() {
         return new Queue(RabbitMQConfig.USER_CREATED_KEY, true);
