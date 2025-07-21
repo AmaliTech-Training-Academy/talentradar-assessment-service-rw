@@ -1,6 +1,0 @@
-# Code owners for production branch
-# .github folder is managed by bikaze and muhirwaJD
-/.github/ @bikaze @muhirwaJD
-
-# Everything else is managed by bikaze and muhirwaJD
-* @bikaze @muhirwaJD
