@@ -142,6 +142,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         // Publish feedback version created event
         try {
+            log.info("this.feedbackEventProducer = {}",feedbackEventProducer);
             feedbackEventProducer.publishFeedbackVersionCreated(savedFeedback);
             log.info("Feedback version created event published successfully for feedbackId={}",
                     savedFeedback.getId());

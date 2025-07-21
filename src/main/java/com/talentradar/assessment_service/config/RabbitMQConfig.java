@@ -173,4 +173,13 @@ public class RabbitMQConfig {
                 .to(notificationEventsExchange())
                 .with(ASSESSMENT_SUBMITTED_KEY);
     }
+    @Bean
+    public Queue userCreatedQueue() {
+        return new Queue(RabbitMQConfig.USER_CREATED_KEY, true);
+    }
+
+    @Bean
+    public Queue userUpdatedQueue() {
+        return new Queue(RabbitMQConfig.USER_UPDATED_KEY, true);
+    }
 }
