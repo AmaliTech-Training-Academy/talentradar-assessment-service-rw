@@ -46,5 +46,15 @@ public class AssessmentController {
         return ResponseEntity.ok(ApiResponse.success(pagedAssessments));
     }
 
-
+    @PutMapping("/{assessmentId}")
+    @PreAuthorize("hasRole('DEVELOPER')")
+    public ResponseEntity<ApiResponse<AssessmentResponseDTO>> updateAssessment(
+            @PathVariable UUID assessmentId,
+            @Valid @RequestBody AssessmentRequestDTO requestDto,
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") String userIdStr
+    ) {
+        UUID userId = UUID.fromString(userIdStr);
+        AssessmentResponseDTO response = assessmentService.updateAssessment(assessmentId, requestDto, userId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Assessment updated successfully"));
+    }
 }
