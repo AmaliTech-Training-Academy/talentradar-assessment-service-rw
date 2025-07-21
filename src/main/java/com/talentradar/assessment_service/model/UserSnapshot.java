@@ -26,10 +26,10 @@ public class UserSnapshot {
     @Column(name = "manager_id")
     private UUID managerId;
 
-    @Column(name = "full_name", nullable = false)
+    @Column(name = "full_name")
     private String fullName;
 
-    @Column(nullable = false)
+    @Column
     private String username;
 
     @Column(nullable = false)
