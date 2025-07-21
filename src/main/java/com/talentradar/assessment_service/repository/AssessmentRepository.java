@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 @Repository
 public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
@@ -26,5 +27,12 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
             "WHERE a.userId = :userId " +
             "ORDER BY a.createdAt DESC")
     Page<Assessment> findAllByUserIdWithDimensions(@Param("userId") UUID userId, Pageable pageable);
+    @Query("SELECT a FROM Assessment a " +
+            "LEFT JOIN FETCH a.dimensions d " +
+            "LEFT JOIN FETCH d.dimensionDefinition " +
+            "WHERE a.userId = :userId " +
+            "AND a.submissionStatus = 'SUBMITTED' " +
+            "ORDER BY a.createdAt DESC")
+    Optional<Assessment> findLatestSubmittedAssessmentByUserId(@Param("userId") UUID userId);
 
 }

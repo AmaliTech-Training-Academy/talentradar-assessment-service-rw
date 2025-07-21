@@ -1,12 +1,14 @@
 package com.talentradar.assessment_service.event.rabbit.producer;
 
 import com.talentradar.assessment_service.config.RabbitMQConfig;
+import com.talentradar.assessment_service.dto.analysis.FeedbackAnalysisDto;
 import com.talentradar.assessment_service.event.FeedbackEvent;
 import com.talentradar.assessment_service.event.FeedbackEventType;
 import com.talentradar.assessment_service.event.UserContext;
 import com.talentradar.assessment_service.model.Feedback;
 import com.talentradar.assessment_service.model.UserSnapshot;
 import com.talentradar.assessment_service.repository.UserSnapshotRepository;
+import com.talentradar.assessment_service.service.impl.FeedbackAnalysisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -21,9 +23,13 @@ import java.util.UUID;
 public class FeedbackEventProducer {
     private final RabbitTemplate rabbitTemplate;
     private final UserSnapshotRepository userSnapshotRepository;
+    private final FeedbackAnalysisService feedbackAnalysisService;
 
     public void publishFeedbackCreated(Feedback feedback) {
         publishFeedbackEvent(feedback, FeedbackEventType.FEEDBACK_CREATED);
+
+        // Also publish feedback.submitted event for analysis
+        publishFeedbackSubmittedForAnalysis(feedback);
     }
 
     public void publishFeedbackUpdated(Feedback feedback) {
@@ -36,6 +42,33 @@ public class FeedbackEventProducer {
 
     public void publishFeedbackVersionCreated(Feedback feedback) {
         publishFeedbackEvent(feedback, FeedbackEventType.FEEDBACK_VERSION_CREATED);
+    }
+
+    /**
+     * Publishes a feedback.submitted event with combined assessment and feedback data for AI analysis
+     */
+    private void publishFeedbackSubmittedForAnalysis(Feedback feedback) {
+        try {
+            log.info("Publishing feedback.submitted event for analysis - feedbackId: {}", feedback.getId());
+
+            // Create the combined analysis DTO
+            FeedbackAnalysisDto analysisDto = feedbackAnalysisService.createAnalysisDto(feedback);
+
+            // Send to analysis queue using the feedback.submitted routing key
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.ANALYSIS_EVENTS_EXCHANGE,
+                    RabbitMQConfig.FEEDBACK_SUBMITTED_KEY,
+                    analysisDto
+            );
+
+            log.info("Successfully published feedback.submitted event for analysis - userId: {}, feedbackId: {}",
+                    analysisDto.getUserId(), feedback.getId());
+
+        } catch (Exception e) {
+            log.error("Error publishing feedback.submitted event for analysis - feedbackId: {}: {}",
+                    feedback.getId(), e.getMessage(), e);
+            // Don't throw exception to avoid breaking the main feedback creation flow
+        }
     }
 
     private void publishFeedbackEvent(Feedback feedback, FeedbackEventType eventType) {
