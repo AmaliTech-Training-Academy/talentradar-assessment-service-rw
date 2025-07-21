@@ -8,7 +8,7 @@ import com.talentradar.assessment_service.dto.feedbackComment.request.CreateFeed
 import com.talentradar.assessment_service.dto.feedbackComment.response.FeedbackCommentDto;
 import com.talentradar.assessment_service.dto.feedbackDimension.request.CreateFeedbackDimensionDto;
 import com.talentradar.assessment_service.dto.feedbackDimension.response.FeedbackDimensionDto;
-import com.talentradar.assessment_service.event.producer.FeedbackEventProducer;
+import com.talentradar.assessment_service.event.rabbit.producer.FeedbackEventProducer;
 import com.talentradar.assessment_service.exception.FeedbackNotFoundException;
 import com.talentradar.assessment_service.model.Feedback;
 import com.talentradar.assessment_service.repository.FeedbackRepository;
