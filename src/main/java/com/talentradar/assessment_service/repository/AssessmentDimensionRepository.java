@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface AssessmentDimensionRepository extends JpaRepository<AssessmentDimension, UUID> {
 
     List<AssessmentDimension> findByAssessmentId(UUID assessmentId);
+
+    void deleteByAssessmentId(UUID assessmentId);
 }

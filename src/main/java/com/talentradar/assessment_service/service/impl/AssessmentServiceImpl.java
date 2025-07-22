@@ -171,4 +171,71 @@ public class AssessmentServiceImpl implements AssessmentService {
             throw new BadRequestException("User has already submitted an assessment within the last 30 days.");
         }
     }
+
+    @Transactional
+    @Override
+    public AssessmentResponseDTO updateAssessment(UUID assessmentId, AssessmentRequestDTO requestDto, UUID userId) {
+        log.info("Starting assessment update for assessmentId={} by userId={}", assessmentId, userId);
+
+        // Find existing assessment
+        Assessment existingAssessment = assessmentRepository.findById(assessmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment with id " + assessmentId + " not found"));
+
+        // Validate ownership - user can only update their own assessment
+        if (!existingAssessment.getUserId().equals(userId)) {
+            log.warn("User {} attempted to update assessment {} owned by user {}",
+                    userId, assessmentId, existingAssessment.getUserId());
+            throw new BadRequestException("You can only update your own assessments");
+        }
+
+        // Validate dimension definition IDs
+        validateDimensionDefinitionIds(requestDto.getDimensions());
+
+        reSubmissionValidation(userId);
+
+        // Calculate new weighted average score
+        int newAverageScore = calculateWeightedAverageScore(requestDto.getDimensions());
+
+        // Update assessment fields
+        existingAssessment.setReflection(requestDto.getReflection());
+        existingAssessment.setSubmissionStatus(requestDto.getStatus());
+        existingAssessment.setAverageScore(newAverageScore);
+
+        // Remove existing dimensions
+        dimensionRepository.deleteByAssessmentId(assessmentId);
+        log.debug("Deleted existing dimensions for assessmentId={}", assessmentId);
+
+        // Save updated assessment first
+        Assessment savedAssessment = assessmentRepository.save(existingAssessment);
+        log.info("Assessment updated with id={} and new averageScore={}", savedAssessment.getId(), newAverageScore);
+
+        // Create new dimensions
+        List<AssessmentDimension> newDimensions = requestDto.getDimensions().stream()
+                .map(dim -> {
+                    DimensionDefinition definition = getDimension(dim.getDimensionDefinitionId());
+                    return AssessmentDimension.builder()
+                            .assessment(savedAssessment)
+                            .dimensionDefinition(definition)
+                            .rating(dim.getRating())
+                            .build();
+                }).toList();
+
+        dimensionRepository.saveAll(newDimensions);
+        log.info("Saved {} new assessment dimensions for assessmentId={}", newDimensions.size(), savedAssessment.getId());
+
+        savedAssessment.setDimensions(newDimensions);
+
+        // Publish assessment updated event
+        try {
+            assessmentEventProducer.publishAssessmentUpdated(savedAssessment);
+            log.info("Assessment updated event published successfully for assessmentId={}", savedAssessment.getId());
+        } catch (Exception e) {
+            log.error("Failed to publish assessment updated event for assessmentId={}: {}",
+                    savedAssessment.getId(), e.getMessage(), e);
+            // Don't fail the transaction if event publishing fails
+        }
+
+        return assessmentMapper.toResponseDto(savedAssessment);
+    }
+
 }

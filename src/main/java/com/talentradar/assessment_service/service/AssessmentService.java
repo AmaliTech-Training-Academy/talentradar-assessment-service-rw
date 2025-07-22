@@ -12,5 +12,5 @@ public interface AssessmentService {
 
     PaginatedResponseDTO<AssessmentResponseDTO> getAllAssessmentsByUser(UUID userId, Pageable pageable);
 
-
+    AssessmentResponseDTO updateAssessment(UUID assessmentId, AssessmentRequestDTO requestDto, UUID userId);
 }
