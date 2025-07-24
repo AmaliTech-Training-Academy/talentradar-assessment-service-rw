@@ -67,20 +67,8 @@ public class AssessmentServiceImpl implements AssessmentService {
         Assessment savedAssessment = assessmentRepository.save(assessment);
         log.info("Assessment saved with id={} and averageScore={}", savedAssessment.getId(), averageScore);
 
-        List<AssessmentDimension> dimensions = requestDto.getDimensions().stream()
-                .map(dim -> {
-                    DimensionDefinition definition = getDimension(dim.getDimensionDefinitionId());
-                    return AssessmentDimension.builder()
-                            .assessment(savedAssessment)
-                            .dimensionDefinition(definition)
-                            .rating(dim.getRating())
-                            .build();
-                }).toList();
-
-        dimensionRepository.saveAll(dimensions);
-        log.info("Saved {} assessment dimensions for assessmentId={}", dimensions.size(), savedAssessment.getId());
-
-        savedAssessment.setDimensions(dimensions);
+        // Create new dimensions
+        createNewDimension(requestDto, savedAssessment, "Saved {} assessment dimensions for assessmentId={}");
 
         // Publish assessment event to Kafka for AI analysis
         try {
@@ -210,20 +198,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         log.info("Assessment updated with id={} and new averageScore={}", savedAssessment.getId(), newAverageScore);
 
         // Create new dimensions
-        List<AssessmentDimension> newDimensions = requestDto.getDimensions().stream()
-                .map(dim -> {
-                    DimensionDefinition definition = getDimension(dim.getDimensionDefinitionId());
-                    return AssessmentDimension.builder()
-                            .assessment(savedAssessment)
-                            .dimensionDefinition(definition)
-                            .rating(dim.getRating())
-                            .build();
-                }).toList();
-
-        dimensionRepository.saveAll(newDimensions);
-        log.info("Saved {} new assessment dimensions for assessmentId={}", newDimensions.size(), savedAssessment.getId());
-
-        savedAssessment.setDimensions(newDimensions);
+        createNewDimension(requestDto, savedAssessment, "Updated {} new assessment dimensions for assessmentId={}");
 
         // Publish assessment updated event
         try {
@@ -236,6 +211,23 @@ public class AssessmentServiceImpl implements AssessmentService {
         }
 
         return assessmentMapper.toResponseDto(savedAssessment);
+    }
+
+    private void createNewDimension(AssessmentRequestDTO requestDto, Assessment savedAssessment, String s) {
+        List<AssessmentDimension> newDimensions = requestDto.getDimensions().stream()
+                .map(dim -> {
+                    DimensionDefinition definition = getDimension(dim.getDimensionDefinitionId());
+                    return AssessmentDimension.builder()
+                            .assessment(savedAssessment)
+                            .dimensionDefinition(definition)
+                            .rating(dim.getRating())
+                            .build();
+                }).toList();
+
+        dimensionRepository.saveAll(newDimensions);
+        log.info(s, newDimensions.size(), savedAssessment.getId());
+
+        savedAssessment.setDimensions(newDimensions);
     }
 
 }
