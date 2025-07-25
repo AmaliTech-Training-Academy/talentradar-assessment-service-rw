@@ -3,8 +3,10 @@ package com.talentradar.assessment_service.service.impl;
 import com.talentradar.assessment_service.dto.userSnapshot.response.UserSnapshotDto;
 import com.talentradar.assessment_service.exception.ResourceNotFoundException;
 import com.talentradar.assessment_service.exception.BadRequestException;
+import com.talentradar.assessment_service.model.SubmissionStatus;
 import com.talentradar.assessment_service.model.UserRole;
 import com.talentradar.assessment_service.model.UserSnapshot;
+import com.talentradar.assessment_service.repository.AssessmentRepository;
 import com.talentradar.assessment_service.repository.UserSnapshotRepository;
 import com.talentradar.assessment_service.service.UserSnapshotService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 public class UserSnapshotServiceImpl implements UserSnapshotService {
 
     private final UserSnapshotRepository userSnapshotRepository;
+    private final AssessmentRepository assessmentRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -39,8 +42,14 @@ public class UserSnapshotServiceImpl implements UserSnapshotService {
         
         List<UserSnapshot> developers = userSnapshotRepository.findByManagerIdAndRole(managerId, UserRole.DEVELOPER);
         log.info("Found {} developers for manager: {}", developers.size(), managerId);
-        
-        return developers.stream()
+
+        List<UserSnapshot> developersWithSubmittedAssessments = developers.stream()
+                .filter(developer -> assessmentRepository.existsByUserIdAndSubmissionStatus(
+                        developer.getUserId(), SubmissionStatus.SUBMITTED))
+                .toList();
+
+
+        return developersWithSubmittedAssessments.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
