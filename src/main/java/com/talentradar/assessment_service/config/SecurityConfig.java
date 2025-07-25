@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,6 +32,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/actuator/health"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/dimensions").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/dimensions").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/dimensions").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/dimensions/**").hasAnyRole("MANAGER", "DEVELOPER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

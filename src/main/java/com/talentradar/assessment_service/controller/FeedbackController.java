@@ -36,31 +36,29 @@ public class FeedbackController {
         List<FeedbackDto> feedback = feedbackService.getAllFeedback();
         return ResponseEntity.ok(ApiResponse.success(feedback, "Feedbacks and retrieved successfully"));
     }
-
+    @PreAuthorize("hasRole('MANAGER') OR hasRole('DEVELOPER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<FeedbackDto>> getFeedbackById(@PathVariable UUID id) {
         FeedbackDto feedback = feedbackService.getFeedbackById(id);
         return ResponseEntity.ok(ApiResponse.success(feedback, "Feedback retrieved successfully"));
     }
 
-    @GetMapping("/{id}/details")
-    public ResponseEntity<ApiResponse<FeedbackDto>> getFeedbackWithDetails(@PathVariable UUID id) {
-        FeedbackDto feedback = feedbackService.getFeedbackWithDetails(id);
-        return ResponseEntity.ok(ApiResponse.success(feedback, "Feedback with details retrieved successfully"));
-    }
 
+    @PreAuthorize("hasRole('MANAGER') OR hasRole('DEVELOPER')")
     @GetMapping("/{id}/complete")
     public ResponseEntity<ApiResponse<FeedbackDto>> getCompleteFeedback(@PathVariable UUID id) {
         FeedbackDto feedback = feedbackService.getCompleteFeedback(id);
         return ResponseEntity.ok(ApiResponse.success(feedback, "Complete feedback retrieved successfully"));
     }
 
+    @PreAuthorize("hasRole('MANAGER') OR hasRole('DEVELOPER')")
     @GetMapping("/manager/{managerId}")
     public ResponseEntity<ApiResponse<List<FeedbackDto>>> getFeedbackByManagerId(@PathVariable UUID managerId) {
         List<FeedbackDto> feedback = feedbackService.getFeedbackByManagerId(managerId);
         return ResponseEntity.ok(ApiResponse.success(feedback, "Manager feedback retrieved successfully"));
     }
 
+    @PreAuthorize("hasRole('MANAGER') OR hasRole('DEVELOPER')")
     @GetMapping("/developer/{developerId}")
     public ResponseEntity<ApiResponse<List<FeedbackDto>>> getFeedbackByDeveloperId(@PathVariable UUID developerId) {
         List<FeedbackDto> feedback = feedbackService.getFeedbackByDeveloperId(developerId);

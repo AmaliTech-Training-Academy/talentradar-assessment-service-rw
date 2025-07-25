@@ -34,5 +34,6 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
             "AND a.submissionStatus = 'SUBMITTED' " +
             "ORDER BY a.createdAt DESC")
     Optional<Assessment> findLatestSubmittedAssessmentByUserId(@Param("userId") UUID userId);
+    boolean existsByUserIdAndSubmissionStatus(UUID userId, SubmissionStatus status);
 
 }
