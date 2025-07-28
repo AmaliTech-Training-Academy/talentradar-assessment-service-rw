@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FeedbackCommentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.service.impl</a> &gt; <span class="el_source">FeedbackCommentServiceImpl.java</span></div><h1>FeedbackCommentServiceImpl.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.service.impl;
+
+import com.talentradar.assessment_service.dto.comment.response.CommentDto;
+import com.talentradar.assessment_service.dto.feedbackComment.request.CreateFeedbackCommentDto;
+import com.talentradar.assessment_service.dto.feedbackComment.response.FeedbackCommentDto;
+import com.talentradar.assessment_service.exception.CommentNotFoundException;
+import com.talentradar.assessment_service.exception.FeedbackNotFoundException;
+import com.talentradar.assessment_service.model.Comment;
+import com.talentradar.assessment_service.model.Feedback;
+import com.talentradar.assessment_service.model.FeedbackComment;
+import com.talentradar.assessment_service.repository.CommentRepository;
+import com.talentradar.assessment_service.repository.FeedbackCommentRepository;
+import com.talentradar.assessment_service.repository.FeedbackRepository;
+import com.talentradar.assessment_service.service.FeedbackCommentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class FeedbackCommentServiceImpl implements FeedbackCommentService {
+
+    private final FeedbackCommentRepository feedbackCommentRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final CommentRepository commentRepository;
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;FeedbackCommentDto&gt; getFeedbackCommentsByFeedbackId(UUID feedbackId) {
+<span class="fc" id="L37">        return feedbackCommentRepository.findByFeedbackId(feedbackId)</span>
+<span class="fc" id="L38">                .stream()</span>
+<span class="fc" id="L39">                .map(this::mapToDto)</span>
+<span class="fc" id="L40">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public FeedbackCommentDto createFeedbackComment(CreateFeedbackCommentDto createDto) {
+<span class="fc" id="L45">        Feedback feedback = feedbackRepository.findById(createDto.getFeedbackId())</span>
+<span class="fc" id="L46">                .orElseThrow(() -&gt; new FeedbackNotFoundException(&quot;Feedback not found with id: &quot; + createDto.getFeedbackId()));</span>
+
+<span class="fc" id="L48">        Comment comment = commentRepository.findById(createDto.getCommentId())</span>
+<span class="fc" id="L49">                .orElseThrow(() -&gt; new CommentNotFoundException(&quot;Comment not found with id: &quot; + createDto.getCommentId()));</span>
+
+<span class="fc" id="L51">        FeedbackComment feedbackComment = FeedbackComment.builder()</span>
+<span class="fc" id="L52">                .feedback(feedback)</span>
+<span class="fc" id="L53">                .comment(comment)</span>
+<span class="fc" id="L54">                .feedbackCommentBody(createDto.getFeedbackCommentBody())</span>
+<span class="fc" id="L55">                .build();</span>
+
+<span class="fc" id="L57">        FeedbackComment savedFeedbackComment = feedbackCommentRepository.save(feedbackComment);</span>
+<span class="fc" id="L58">        return mapToDto(savedFeedbackComment);</span>
+    }
+
+    private FeedbackCommentDto mapToDto(FeedbackComment feedbackComment) {
+<span class="fc" id="L62">        CommentDto commentDto = CommentDto.builder()</span>
+<span class="fc" id="L63">                .id(feedbackComment.getComment().getId())</span>
+<span class="fc" id="L64">                .commentTitle(feedbackComment.getComment().getCommentTitle())</span>
+<span class="fc" id="L65">                .build();</span>
+
+<span class="fc" id="L67">        return FeedbackCommentDto.builder()</span>
+<span class="fc" id="L68">                .id(feedbackComment.getId())</span>
+<span class="fc" id="L69">                .feedbackId(feedbackComment.getFeedback().getId())</span>
+<span class="fc" id="L70">                .comment(commentDto)</span>
+<span class="fc" id="L71">                .feedbackCommentBody(feedbackComment.getFeedbackCommentBody())</span>
+<span class="fc" id="L72">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

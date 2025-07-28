@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FeedbackController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.controller</a> &gt; <span class="el_source">FeedbackController.java</span></div><h1>FeedbackController.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.controller;
+
+import com.talentradar.assessment_service.dto.api.ApiResponse;
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
+import com.talentradar.assessment_service.dto.comment.response.CommentDto;
+import com.talentradar.assessment_service.dto.feedback.request.CreateCompleteFeedbackDto;
+import com.talentradar.assessment_service.dto.feedback.request.FeedbackSearchCriteria;
+import com.talentradar.assessment_service.dto.feedback.response.FeedbackDto;
+import com.talentradar.assessment_service.service.CommentService;
+import com.talentradar.assessment_service.service.FeedbackService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/v1/feedbacks&quot;)
+@RequiredArgsConstructor
+public class FeedbackController {
+
+    private final FeedbackService feedbackService;
+    private final CommentService commentService;
+
+    // ============= FEEDBACK ENDPOINTS =============
+    @PreAuthorize(&quot;hasRole('MANAGER')&quot;)
+    @GetMapping
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;FeedbackDto&gt;&gt;&gt; getAllFeedback() {
+<span class="nc" id="L36">        List&lt;FeedbackDto&gt; feedback = feedbackService.getAllFeedback();</span>
+<span class="nc" id="L37">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Feedbacks and retrieved successfully&quot;));</span>
+    }
+    @PreAuthorize(&quot;hasRole('MANAGER') OR hasRole('DEVELOPER')&quot;)
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;FeedbackDto&gt;&gt; getFeedbackById(@PathVariable UUID id) {
+<span class="nc" id="L42">        FeedbackDto feedback = feedbackService.getFeedbackById(id);</span>
+<span class="nc" id="L43">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Feedback retrieved successfully&quot;));</span>
+    }
+
+
+    @PreAuthorize(&quot;hasRole('MANAGER') OR hasRole('DEVELOPER')&quot;)
+    @GetMapping(&quot;/{id}/complete&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;FeedbackDto&gt;&gt; getCompleteFeedback(@PathVariable UUID id) {
+<span class="nc" id="L50">        FeedbackDto feedback = feedbackService.getCompleteFeedback(id);</span>
+<span class="nc" id="L51">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Complete feedback retrieved successfully&quot;));</span>
+    }
+
+    @PreAuthorize(&quot;hasRole('MANAGER') OR hasRole('DEVELOPER')&quot;)
+    @GetMapping(&quot;/manager/{managerId}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;FeedbackDto&gt;&gt;&gt; getFeedbackByManagerId(@PathVariable UUID managerId) {
+<span class="nc" id="L57">        List&lt;FeedbackDto&gt; feedback = feedbackService.getFeedbackByManagerId(managerId);</span>
+<span class="nc" id="L58">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Manager feedback retrieved successfully&quot;));</span>
+    }
+
+    @PreAuthorize(&quot;hasRole('MANAGER') OR hasRole('DEVELOPER')&quot;)
+    @GetMapping(&quot;/developer/{developerId}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;FeedbackDto&gt;&gt;&gt; getFeedbackByDeveloperId(@PathVariable UUID developerId) {
+<span class="nc" id="L64">        List&lt;FeedbackDto&gt; feedback = feedbackService.getFeedbackByDeveloperId(developerId);</span>
+<span class="nc" id="L65">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Developer feedback retrieved successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/manager/{managerId}/developer/{developerId}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;FeedbackDto&gt;&gt;&gt; getFeedbackByManagerAndDeveloper(
+            @PathVariable UUID managerId, @PathVariable UUID developerId) {
+<span class="nc" id="L71">        List&lt;FeedbackDto&gt; feedback = feedbackService.getFeedbackByManagerAndDeveloper(managerId, developerId);</span>
+<span class="nc" id="L72">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Manager-developer feedback history retrieved successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/manager/{managerId}/developer/{developerId}/latest&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;FeedbackDto&gt;&gt; getLatestFeedbackVersion(
+            @PathVariable UUID managerId, @PathVariable UUID developerId) {
+<span class="nc" id="L78">        FeedbackDto feedback = feedbackService.getLatestFeedbackVersion(managerId, developerId);</span>
+<span class="nc" id="L79">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Latest feedback version retrieved successfully&quot;));</span>
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;ApiResponse&lt;FeedbackDto&gt;&gt; createCompleteFeedback(
+            @Valid @RequestBody CreateCompleteFeedbackDto createDto) {
+<span class="nc" id="L85">        FeedbackDto createdFeedback = feedbackService.createCompleteFeedback(createDto);</span>
+<span class="nc" id="L86">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L87">                .body(ApiResponse.success(createdFeedback, &quot;Complete feedback created successfully&quot;));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;FeedbackDto&gt;&gt; updateCompleteFeedback(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateCompleteFeedbackDto updateDto) {
+<span class="nc" id="L94">        FeedbackDto updatedFeedback = feedbackService.updateCompleteFeedback(id, updateDto);</span>
+<span class="nc" id="L95">        return ResponseEntity.ok(ApiResponse.success(updatedFeedback, &quot;Complete feedback updated successfully&quot;));</span>
+    }
+
+    @PostMapping(&quot;/manager/{managerId}/developer/{developerId}/new-version&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;FeedbackDto&gt;&gt; createNewFeedbackVersion(
+            @PathVariable UUID managerId, @PathVariable UUID developerId) {
+<span class="nc" id="L101">        FeedbackDto feedback = feedbackService.createNewFeedbackVersion(managerId, developerId);</span>
+<span class="nc" id="L102">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L103">                .body(ApiResponse.success(feedback, &quot;New feedback version created successfully&quot;));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; deleteFeedback(@PathVariable UUID id) {
+<span class="nc" id="L108">        feedbackService.deleteFeedback(id);</span>
+<span class="nc" id="L109">        return ResponseEntity.ok(ApiResponse.success(&quot;Feedback deleted successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/exists/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Boolean&gt;&gt; checkFeedbackExists(@PathVariable UUID id) {
+<span class="nc" id="L114">        boolean exists = feedbackService.feedbackExists(id);</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        String message = exists ? &quot;Feedback exists&quot; : &quot;Feedback does not exist&quot;;</span>
+<span class="nc" id="L116">        return ResponseEntity.ok(ApiResponse.success(exists, message));</span>
+    }
+
+    @PostMapping(&quot;/batch&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;FeedbackDto&gt;&gt;&gt; getFeedbackByIds(
+            @RequestBody List&lt;UUID&gt; ids) {
+<span class="nc" id="L122">        List&lt;FeedbackDto&gt; feedback = feedbackService.getFeedbackByIds(ids);</span>
+<span class="nc" id="L123">        return ResponseEntity.ok(ApiResponse.success(feedback, &quot;Feedback retrieved successfully&quot;));</span>
+    }
+
+    // ============= COMMENT TEMPLATE ENDPOINTS =============
+
+    @GetMapping(&quot;/comments/templates&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;CommentDto&gt;&gt;&gt; getAllCommentTemplates() {
+<span class="nc" id="L130">        List&lt;CommentDto&gt; comments = commentService.getAllComments();</span>
+<span class="nc" id="L131">        return ResponseEntity.ok(ApiResponse.success(comments, &quot;Comment templates retrieved successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/comments/templates/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;CommentDto&gt;&gt; getCommentTemplateById(@PathVariable UUID id) {
+<span class="nc" id="L136">        CommentDto comment = commentService.getCommentById(id);</span>
+<span class="nc" id="L137">        return ResponseEntity.ok(ApiResponse.success(comment, &quot;Comment template retrieved successfully&quot;));</span>
+    }
+
+    @PostMapping(&quot;/comments/templates&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;CommentDto&gt;&gt; createCommentTemplate(
+            @Valid @RequestBody CreateCommentDto createDto) {
+<span class="nc" id="L143">        CommentDto createdComment = commentService.createComment(createDto);</span>
+<span class="nc" id="L144">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L145">                .body(ApiResponse.success(createdComment, &quot;Comment template created successfully&quot;));</span>
+    }
+
+    @PutMapping(&quot;/comments/templates/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;CommentDto&gt;&gt; updateCommentTemplate(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateCommentDto updateDto) {
+<span class="nc" id="L152">        CommentDto updatedComment = commentService.updateComment(id, updateDto);</span>
+<span class="nc" id="L153">        return ResponseEntity.ok(ApiResponse.success(updatedComment, &quot;Comment template updated successfully&quot;));</span>
+    }
+
+    @DeleteMapping(&quot;/comments/templates/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; deleteCommentTemplate(@PathVariable UUID id) {
+<span class="nc" id="L158">        commentService.deleteComment(id);</span>
+<span class="nc" id="L159">        return ResponseEntity.ok(ApiResponse.success(&quot;Comment template deleted successfully&quot;));</span>
+    }
+    @GetMapping(&quot;/search&quot;)
+    @PreAuthorize(&quot;hasRole('MANAGER') or hasRole('DEVELOPER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;PaginatedResponseDTO&lt;FeedbackDto&gt;&gt;&gt; searchFeedbacks(
+            @ParameterObject FeedbackSearchCriteria criteria,
+            @ParameterObject Pageable pageable) {
+<span class="nc" id="L166">        PaginatedResponseDTO&lt;FeedbackDto&gt; feedbacks = feedbackService.searchFeedbacks(criteria, pageable);</span>
+<span class="nc" id="L167">        return ResponseEntity.ok(ApiResponse.success(feedbacks, &quot;Feedbacks retrieved successfully&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

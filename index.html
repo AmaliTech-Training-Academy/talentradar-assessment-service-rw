@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Test Reports Dashboard</title>
+  <style>
+    :root {
+      /* Light theme */
+      --bg-light: #e5e7eb;
+      --container-light: #f3f4f6;
+      --text-light: #111827;
+      --card-bg-light: #ffffff;
+      --card-text-light: #4b5563;
+
+      /* Dark theme */
+      --bg-dark: #171717;
+      --container-dark: #262626;
+      --text-dark: #f3f4f6;
+      --card-bg-dark: #2f2f2f;
+      --card-text-dark: #d1d5db;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: var(--bg-light);
+      color: var(--text-light);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--container-light);
+      border-radius: 10px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--text-light);
+      margin-bottom: 40px;
+    }
+
+    .repo-chip {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .report-card {
+      background: var(--card-bg-light);
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease;
+      color: var(--card-text-light);
+    }
+
+    .report-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .report-card h2 {
+      color: var(--text-light);
+      margin-bottom: 15px;
+    }
+
+    .report-card p {
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 25px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .btn-allure {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .btn-allure:hover {
+      background: #45a049;
+    }
+
+    .btn-jacoco {
+      background: #2196F3;
+      color: white;
+    }
+
+    .btn-jacoco:hover {
+      background: #1976D2;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 14px;
+      color: var(--card-text-light);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: var(--bg-dark);
+        color: var(--text-dark);
+      }
+      h1 {
+        color: var(--text-dark);
+      }
+      .container {
+        background: var(--container-dark);
+      }
+      .report-card {
+        background: var(--card-bg-dark);
+        color: var(--card-text-dark);
+      }
+      .report-card h2 {
+        color: var(--text-dark);
+      }
+      .footer {
+        color: var(--card-text-dark);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>📊 Test Reports Dashboard</h1>
+  <p style="display: flex; align-items: center; justify-content: center; font-size: 18px; gap: 5px;">
+    Comprehensive testing reports for <span class="repo-chip">talentradar-assessment-service-rw</span>
+  </p>
+
+  <div class="reports-grid">
+    <div class="report-card">
+      <h2>🎯 Allure Report</h2>
+      <p>Detailed test execution results, including test steps, attachments, and historical trends. Perfect for
+        understanding test behavior and debugging failures.</p>
+      <a class="btn btn-allure" href="allure/index.html">View Allure Report</a>
+    </div>
+
+    <div class="report-card">
+      <h2>📈 Test Coverage</h2>
+      <p>Code coverage analysis showing which lines, branches, and methods are covered by your tests. Essential for
+        maintaining code quality.</p>
+      <a class="btn btn-jacoco" href="jacoco/index.html">View Coverage Report</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Reports generated automatically by GitHub Actions</p>
+    <p>Last updated: 2025-07-28 09:10 UTC+2</p>
+  </div>
+</div>
+</body>
+</html>

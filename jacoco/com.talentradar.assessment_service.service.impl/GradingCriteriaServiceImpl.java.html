@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GradingCriteriaServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.service.impl</a> &gt; <span class="el_source">GradingCriteriaServiceImpl.java</span></div><h1>GradingCriteriaServiceImpl.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.service.impl;
+
+import com.talentradar.assessment_service.dto.gradingCriteria.request.CreateGradingCriteriaDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.response.GradingCriteriaDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.request.UpdateGradingCriteriaDto;
+import com.talentradar.assessment_service.exception.GradingCriteriaNotFoundException;
+import com.talentradar.assessment_service.model.GradingCriteria;
+import com.talentradar.assessment_service.repository.GradingCriteriaRepository;
+import com.talentradar.assessment_service.service.GradingCriteriaService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class GradingCriteriaServiceImpl implements GradingCriteriaService {
+    
+    private final GradingCriteriaRepository gradingCriteriaRepository;
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;GradingCriteriaDto&gt; getAllGradingCriteria() {
+<span class="fc" id="L29">        return gradingCriteriaRepository.findAll()</span>
+<span class="fc" id="L30">                .stream()</span>
+<span class="fc" id="L31">                .map(this::mapToDto)</span>
+<span class="fc" id="L32">                .collect(Collectors.toList());</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public GradingCriteriaDto getGradingCriteriaById(UUID id) {
+<span class="fc" id="L38">        GradingCriteria gradingCriteria = gradingCriteriaRepository.findById(id)</span>
+<span class="fc" id="L39">                .orElseThrow(() -&gt; new GradingCriteriaNotFoundException(&quot;Grading criteria not found with id: &quot; + id));</span>
+<span class="fc" id="L40">        return mapToDto(gradingCriteria);</span>
+    }
+    
+    @Override
+    public GradingCriteriaDto createGradingCriteria(CreateGradingCriteriaDto createDto) {
+<span class="fc" id="L45">        GradingCriteria gradingCriteria = GradingCriteria.builder()</span>
+<span class="fc" id="L46">                .criteriaName(createDto.getCriteriaName())</span>
+<span class="fc" id="L47">                .dimensionDefinitions(new HashSet&lt;&gt;())</span>
+<span class="fc" id="L48">                .build();</span>
+        
+<span class="fc" id="L50">        GradingCriteria savedGradingCriteria = gradingCriteriaRepository.save(gradingCriteria);</span>
+<span class="fc" id="L51">        return mapToDto(savedGradingCriteria);</span>
+    }
+    
+    @Override
+    public GradingCriteriaDto updateGradingCriteria(UUID id, UpdateGradingCriteriaDto updateDto) {
+<span class="fc" id="L56">        GradingCriteria gradingCriteria = gradingCriteriaRepository.findById(id)</span>
+<span class="fc" id="L57">                .orElseThrow(() -&gt; new GradingCriteriaNotFoundException(&quot;Grading criteria not found with id: &quot; + id));</span>
+        
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (updateDto.getCriteriaName() != null) {</span>
+<span class="fc" id="L60">            gradingCriteria.setCriteriaName(updateDto.getCriteriaName());</span>
+        }
+        
+<span class="fc" id="L63">        GradingCriteria updatedGradingCriteria = gradingCriteriaRepository.save(gradingCriteria);</span>
+<span class="fc" id="L64">        return mapToDto(updatedGradingCriteria);</span>
+    }
+    
+    @Override
+    public void deleteGradingCriteria(UUID id) {
+<span class="fc" id="L69">        GradingCriteria gradingCriteria = gradingCriteriaRepository.findById(id)</span>
+<span class="fc" id="L70">                .orElseThrow(() -&gt; new GradingCriteriaNotFoundException(&quot;Grading criteria not found with id: &quot; + id));</span>
+<span class="fc" id="L71">        gradingCriteriaRepository.delete(gradingCriteria);</span>
+<span class="fc" id="L72">    }</span>
+    
+    @Override
+    @Transactional(readOnly = true)
+    public boolean gradingCriteriaExists(UUID id) {
+<span class="fc" id="L77">        return gradingCriteriaRepository.existsById(id);</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;GradingCriteriaDto&gt; getGradingCriteriaByIds(List&lt;UUID&gt; ids) {
+<span class="nc" id="L83">        return gradingCriteriaRepository.findAllById(ids)</span>
+<span class="nc" id="L84">                .stream()</span>
+<span class="nc" id="L85">                .map(this::mapToDto)</span>
+<span class="nc" id="L86">                .collect(Collectors.toList());</span>
+    }
+    
+    private GradingCriteriaDto mapToDto(GradingCriteria gradingCriteria) {
+<span class="fc" id="L90">        return GradingCriteriaDto.builder()</span>
+<span class="fc" id="L91">                .id(gradingCriteria.getId())</span>
+<span class="fc" id="L92">                .criteriaName(gradingCriteria.getCriteriaName())</span>
+<span class="fc" id="L93">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

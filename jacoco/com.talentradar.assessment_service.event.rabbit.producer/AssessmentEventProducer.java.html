@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssessmentEventProducer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.event.rabbit.producer</a> &gt; <span class="el_source">AssessmentEventProducer.java</span></div><h1>AssessmentEventProducer.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.event.rabbit.producer;
+
+import com.talentradar.assessment_service.config.RabbitMQConfig;
+import com.talentradar.assessment_service.event.AssessmentEvent;
+import com.talentradar.assessment_service.event.AssessmentEventType;
+import com.talentradar.assessment_service.event.UserContext;
+import com.talentradar.assessment_service.model.Assessment;
+import com.talentradar.assessment_service.model.UserSnapshot;
+import com.talentradar.assessment_service.repository.UserSnapshotRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+<span class="fc" id="L20">@Slf4j</span>
+public class AssessmentEventProducer {
+    private final RabbitTemplate rabbitTemplate;
+    private final UserSnapshotRepository userSnapshotRepository;
+
+    public void publishAssessmentSubmitted(Assessment assessment) {
+        try {
+<span class="fc" id="L27">            UserSnapshot userSnapshot = userSnapshotRepository.findByUserId(assessment.getUserId())</span>
+<span class="fc" id="L28">                    .orElseThrow(() -&gt; new RuntimeException(&quot;User snapshot not found for userId: &quot; + assessment.getUserId()));</span>
+
+<span class="fc" id="L30">            UserContext userContext = UserContext.builder()</span>
+<span class="fc" id="L31">                    .userId(userSnapshot.getUserId())</span>
+<span class="fc" id="L32">                    .fullName(userSnapshot.getFullName())</span>
+<span class="fc" id="L33">                    .username(userSnapshot.getUsername())</span>
+<span class="fc" id="L34">                    .email(userSnapshot.getEmail())</span>
+<span class="fc" id="L35">                    .role(userSnapshot.getRole().name())</span>
+<span class="fc" id="L36">                    .managerId(userSnapshot.getManagerId())</span>
+<span class="fc" id="L37">                    .build();</span>
+
+<span class="fc" id="L39">            AssessmentEvent assessmentEvent = AssessmentEvent.builder()</span>
+<span class="fc" id="L40">                    .eventType(AssessmentEventType.ASSESSMENT_SUBMITTED)</span>
+<span class="fc" id="L41">                    .assessmentId(assessment.getId())</span>
+<span class="fc" id="L42">                    .userId(assessment.getUserId())</span>
+<span class="fc" id="L43">                    .reflection(assessment.getReflection())</span>
+<span class="fc" id="L44">                    .averageScore(assessment.getAverageScore())</span>
+<span class="fc" id="L45">                    .submissionStatus(assessment.getSubmissionStatus().name())</span>
+<span class="fc" id="L46">                    .timestamp(LocalDateTime.now())</span>
+<span class="fc" id="L47">                    .eventId(UUID.randomUUID().toString())</span>
+<span class="fc" id="L48">                    .source(&quot;assessment-service&quot;)</span>
+<span class="fc" id="L49">                    .userContext(userContext)</span>
+<span class="fc" id="L50">                    .build();</span>
+
+            // Send to assessment events exchange
+<span class="fc" id="L53">            rabbitTemplate.convertAndSend(</span>
+                    RabbitMQConfig.ASSESSMENT_EVENTS_EXCHANGE,
+                    RabbitMQConfig.ASSESSMENT_SUBMITTED_KEY,
+                    assessmentEvent
+            );
+
+            // Also send to notification service for the manager
+<span class="fc bfc" id="L60" title="All 2 branches covered.">            if (userContext.getManagerId() != null) {</span>
+<span class="fc" id="L61">                rabbitTemplate.convertAndSend(</span>
+                        RabbitMQConfig.NOTIFICATION_EVENTS_EXCHANGE,
+                        RabbitMQConfig.ASSESSMENT_SUBMITTED_KEY,
+<span class="fc" id="L64">                        createNotificationEvent(assessmentEvent, userContext)</span>
+                );
+            }
+
+<span class="fc" id="L68">            log.info(&quot;Successfully published assessment event for assessmentId: {}&quot;, assessment.getId());</span>
+
+<span class="fc" id="L70">        } catch (Exception e) {</span>
+<span class="fc" id="L71">            log.error(&quot;Error publishing assessment event for assessmentId: {}: {}&quot;,</span>
+<span class="fc" id="L72">                    assessment.getId(), e.getMessage(), e);</span>
+<span class="fc" id="L73">        }</span>
+<span class="fc" id="L74">    }</span>
+
+    public void publishAssessmentUpdated(Assessment assessment) {
+        try {
+<span class="fc" id="L78">            UserSnapshot userSnapshot = userSnapshotRepository.findByUserId(assessment.getUserId())</span>
+<span class="fc" id="L79">                    .orElseThrow(() -&gt; new RuntimeException(&quot;User snapshot not found for userId: &quot; + assessment.getUserId()));</span>
+
+<span class="fc" id="L81">            UserContext userContext = UserContext.builder()</span>
+<span class="fc" id="L82">                    .userId(userSnapshot.getUserId())</span>
+<span class="fc" id="L83">                    .fullName(userSnapshot.getFullName())</span>
+<span class="fc" id="L84">                    .username(userSnapshot.getUsername())</span>
+<span class="fc" id="L85">                    .email(userSnapshot.getEmail())</span>
+<span class="fc" id="L86">                    .role(userSnapshot.getRole().name())</span>
+<span class="fc" id="L87">                    .managerId(userSnapshot.getManagerId())</span>
+<span class="fc" id="L88">                    .build();</span>
+
+<span class="fc" id="L90">            AssessmentEvent assessmentEvent = AssessmentEvent.builder()</span>
+<span class="fc" id="L91">                    .eventType(AssessmentEventType.ASSESSMENT_UPDATED)</span>
+<span class="fc" id="L92">                    .assessmentId(assessment.getId())</span>
+<span class="fc" id="L93">                    .userId(assessment.getUserId())</span>
+<span class="fc" id="L94">                    .reflection(assessment.getReflection())</span>
+<span class="fc" id="L95">                    .averageScore(assessment.getAverageScore())</span>
+<span class="fc" id="L96">                    .submissionStatus(assessment.getSubmissionStatus().name())</span>
+<span class="fc" id="L97">                    .timestamp(LocalDateTime.now())</span>
+<span class="fc" id="L98">                    .eventId(UUID.randomUUID().toString())</span>
+<span class="fc" id="L99">                    .source(&quot;assessment-service&quot;)</span>
+<span class="fc" id="L100">                    .userContext(userContext)</span>
+<span class="fc" id="L101">                    .build();</span>
+
+<span class="fc" id="L103">            rabbitTemplate.convertAndSend(</span>
+                    RabbitMQConfig.ASSESSMENT_EVENTS_EXCHANGE,
+                    &quot;assessment.updated&quot;,
+                    assessmentEvent
+            );
+
+<span class="fc" id="L109">            log.info(&quot;Successfully published assessment updated event for assessmentId: {}&quot;, assessment.getId());</span>
+
+<span class="fc" id="L111">        } catch (Exception e) {</span>
+<span class="fc" id="L112">            log.error(&quot;Error publishing assessment updated event for assessmentId: {}: {}&quot;,</span>
+<span class="fc" id="L113">                    assessment.getId(), e.getMessage(), e);</span>
+<span class="fc" id="L114">        }</span>
+<span class="fc" id="L115">    }</span>
+
+    private Object createNotificationEvent(AssessmentEvent assessmentEvent, UserContext userContext) {
+<span class="fc" id="L118">        return new Object() {</span>
+<span class="nc" id="L119">            public String getTitle() { return &quot;New Assessment Submitted&quot;; }</span>
+            public String getContent() { 
+<span class="nc" id="L121">                return String.format(&quot;%s has submitted a new self-assessment.&quot;, userContext.getFullName()); </span>
+            }
+            public String getRecipientId() { 
+<span class="nc bnc" id="L124" title="All 2 branches missed.">                return userContext.getManagerId() != null ? userContext.getManagerId().toString() : null; </span>
+            }
+<span class="nc" id="L126">            public String getRecipientEmail() { return &quot;manager@example.com&quot;; } // You'd get this from manager's snapshot</span>
+<span class="nc" id="L127">            public String getType() { return &quot;IN_APP&quot;; }</span>
+<span class="nc" id="L128">            public String getCategory() { return &quot;INFO&quot;; }</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

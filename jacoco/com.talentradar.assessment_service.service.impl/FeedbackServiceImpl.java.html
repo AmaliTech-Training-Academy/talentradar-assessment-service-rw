@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FeedbackServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.service.impl</a> &gt; <span class="el_source">FeedbackServiceImpl.java</span></div><h1>FeedbackServiceImpl.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.service.impl;
+
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
+import com.talentradar.assessment_service.dto.feedback.request.CreateCompleteFeedbackDto;
+import com.talentradar.assessment_service.dto.feedback.request.FeedbackSearchCriteria;
+import com.talentradar.assessment_service.dto.feedback.response.FeedbackDto;
+import com.talentradar.assessment_service.dto.feedbackComment.request.CreateFeedbackCommentDto;
+import com.talentradar.assessment_service.dto.feedbackComment.response.FeedbackCommentDto;
+import com.talentradar.assessment_service.dto.feedbackDimension.request.CreateFeedbackDimensionDto;
+import com.talentradar.assessment_service.dto.feedbackDimension.response.FeedbackDimensionDto;
+import com.talentradar.assessment_service.event.rabbit.producer.FeedbackEventProducer;
+import com.talentradar.assessment_service.exception.FeedbackNotFoundException;
+import com.talentradar.assessment_service.model.Feedback;
+import com.talentradar.assessment_service.repository.FeedbackRepository;
+import com.talentradar.assessment_service.repository.specification.FeedbackSpecification;
+import com.talentradar.assessment_service.service.FeedbackCommentService;
+import com.talentradar.assessment_service.service.FeedbackDimensionService;
+import com.talentradar.assessment_service.service.FeedbackService;
+import com.talentradar.assessment_service.util.PaginationUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+<span class="fc" id="L36">@Slf4j</span>
+public class FeedbackServiceImpl implements FeedbackService {
+
+    private final FeedbackRepository feedbackRepository;
+    private final FeedbackDimensionService feedbackDimensionService;
+    private final FeedbackCommentService feedbackCommentService;
+    private final FeedbackEventProducer feedbackEventProducer;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;FeedbackDto&gt; getAllFeedback() {
+<span class="nc" id="L47">        return feedbackRepository.findAll()</span>
+<span class="nc" id="L48">                .stream()</span>
+<span class="nc" id="L49">                .map(this::mapToDto)</span>
+<span class="nc" id="L50">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FeedbackDto getFeedbackById(UUID id) {
+<span class="fc" id="L56">        Feedback feedback = feedbackRepository.findById(id)</span>
+<span class="fc" id="L57">                .orElseThrow(() -&gt; new FeedbackNotFoundException(&quot;Feedback not found with id: &quot; + id));</span>
+<span class="fc" id="L58">        return mapToDto(feedback);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;FeedbackDto&gt; getFeedbackByManagerId(UUID managerId) {
+<span class="fc" id="L64">        return feedbackRepository.findByManagerId(managerId)</span>
+<span class="fc" id="L65">                .stream()</span>
+<span class="fc" id="L66">                .map(this::mapToDto)</span>
+<span class="fc" id="L67">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;FeedbackDto&gt; getFeedbackByDeveloperId(UUID developerId) {
+<span class="nc" id="L73">        return feedbackRepository.findByDeveloperId(developerId)</span>
+<span class="nc" id="L74">                .stream()</span>
+<span class="nc" id="L75">                .map(this::mapToDto)</span>
+<span class="nc" id="L76">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;FeedbackDto&gt; getFeedbackByManagerAndDeveloper(UUID managerId, UUID developerId) {
+<span class="nc" id="L82">        return feedbackRepository.findByManagerIdAndDeveloperIdOrderByFeedbackVersionDesc(managerId, developerId)</span>
+<span class="nc" id="L83">                .stream()</span>
+<span class="nc" id="L84">                .map(this::mapToDto)</span>
+<span class="nc" id="L85">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FeedbackDto getLatestFeedbackVersion(UUID managerId, UUID developerId) {
+<span class="nc" id="L91">        Feedback feedback = feedbackRepository.findTopByManagerIdAndDeveloperIdOrderByFeedbackVersionDesc(managerId, developerId)</span>
+<span class="nc" id="L92">                .orElseThrow(() -&gt; new FeedbackNotFoundException(&quot;No feedback found for manager: &quot; + managerId + &quot; and developer: &quot; + developerId));</span>
+<span class="nc" id="L93">        return mapToDtoWithDetails(feedback);</span>
+    }
+
+    @Override
+    public void deleteFeedback(UUID id) {
+<span class="nc" id="L98">        Feedback feedback = feedbackRepository.findById(id)</span>
+<span class="nc" id="L99">                .orElseThrow(() -&gt; new FeedbackNotFoundException(&quot;Feedback not found with id: &quot; + id));</span>
+
+<span class="nc" id="L101">        feedbackRepository.delete(feedback);</span>
+
+        // Publish feedback deleted event
+        try {
+<span class="nc" id="L105">            feedbackEventProducer.publishFeedbackDeleted(feedback);</span>
+<span class="nc" id="L106">            log.info(&quot;Feedback deleted event published successfully for feedbackId={}&quot;, id);</span>
+<span class="nc" id="L107">        } catch (Exception e) {</span>
+<span class="nc" id="L108">            log.error(&quot;Failed to publish feedback deleted event for feedbackId={}: {}&quot;,</span>
+<span class="nc" id="L109">                    id, e.getMessage(), e);</span>
+            // Don't fail the transaction if event publishing fails
+<span class="nc" id="L111">        }</span>
+<span class="nc" id="L112">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean feedbackExists(UUID id) {
+<span class="fc" id="L117">        return feedbackRepository.existsById(id);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;FeedbackDto&gt; getFeedbackByIds(List&lt;UUID&gt; ids) {
+<span class="nc" id="L123">        return feedbackRepository.findAllById(ids)</span>
+<span class="nc" id="L124">                .stream()</span>
+<span class="nc" id="L125">                .map(this::mapToDto)</span>
+<span class="nc" id="L126">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public FeedbackDto createNewFeedbackVersion(UUID managerId, UUID developerId) {
+<span class="fc" id="L131">        int latestVersion = feedbackRepository.findTopByManagerIdAndDeveloperIdOrderByFeedbackVersionDesc(managerId, developerId)</span>
+<span class="fc" id="L132">                .map(feedback -&gt; feedback.getFeedbackVersion() + 1)</span>
+<span class="fc" id="L133">                .orElse(1);</span>
+
+<span class="fc" id="L135">        Feedback feedback = Feedback.builder()</span>
+<span class="fc" id="L136">                .managerId(managerId)</span>
+<span class="fc" id="L137">                .developerId(developerId)</span>
+<span class="fc" id="L138">                .feedbackVersion(latestVersion)</span>
+<span class="fc" id="L139">                .build();</span>
+
+<span class="fc" id="L141">        Feedback savedFeedback = feedbackRepository.save(feedback);</span>
+
+        // Publish feedback version created event
+        try {
+<span class="fc" id="L145">            log.info(&quot;this.feedbackEventProducer = {}&quot;,feedbackEventProducer);</span>
+<span class="nc" id="L146">            feedbackEventProducer.publishFeedbackVersionCreated(savedFeedback);</span>
+<span class="nc" id="L147">            log.info(&quot;Feedback version created event published successfully for feedbackId={}&quot;,</span>
+<span class="nc" id="L148">                    savedFeedback.getId());</span>
+<span class="fc" id="L149">        } catch (Exception e) {</span>
+<span class="fc" id="L150">            log.error(&quot;Failed to publish feedback version created event for feedbackId={}: {}&quot;,</span>
+<span class="fc" id="L151">                    savedFeedback.getId(), e.getMessage(), e);</span>
+            // Don't fail the transaction if event publishing fails
+<span class="nc" id="L153">        }</span>
+
+<span class="fc" id="L155">        return mapToDto(savedFeedback);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FeedbackDto getFeedbackWithDetails(UUID id) {
+<span class="nc" id="L161">        Feedback feedback = feedbackRepository.findById(id)</span>
+<span class="nc" id="L162">                .orElseThrow(() -&gt; new FeedbackNotFoundException(&quot;Feedback not found with id: &quot; + id));</span>
+<span class="nc" id="L163">        return mapToDtoWithDetails(feedback);</span>
+    }
+
+    @Override
+    public FeedbackDto createCompleteFeedback(CreateCompleteFeedbackDto createDto) {
+<span class="fc" id="L168">        log.info(&quot;Creating complete feedback for manager: {} and developer: {}&quot;,</span>
+<span class="fc" id="L169">                createDto.getManagerId(), createDto.getDeveloperId());</span>
+
+        // Calculate the next version number based on existing feedback between this manager and developer
+<span class="fc" id="L172">        int nextVersion = feedbackRepository.findTopByManagerIdAndDeveloperIdOrderByFeedbackVersionDesc(</span>
+<span class="fc" id="L173">                        createDto.getManagerId(), createDto.getDeveloperId())</span>
+<span class="pc" id="L174">                .map(existingFeedback -&gt; existingFeedback.getFeedbackVersion() + 1)</span>
+<span class="fc" id="L175">                .orElse(1); // First feedback starts at version 1</span>
+
+<span class="fc" id="L177">        log.info(&quot;Calculated feedback version: {} for manager: {} and developer: {}&quot;,</span>
+<span class="fc" id="L178">                nextVersion, createDto.getManagerId(), createDto.getDeveloperId());</span>
+
+<span class="fc" id="L180">        Feedback feedback = Feedback.builder()</span>
+<span class="fc" id="L181">                .managerId(createDto.getManagerId())</span>
+<span class="fc" id="L182">                .developerId(createDto.getDeveloperId())</span>
+<span class="fc" id="L183">                .feedbackVersion(nextVersion)</span>
+<span class="fc" id="L184">                .build();</span>
+
+<span class="fc" id="L186">        Feedback savedFeedback = feedbackRepository.save(feedback);</span>
+<span class="fc" id="L187">        log.info(&quot;Created feedback with ID: {}&quot;, savedFeedback.getId());</span>
+
+<span class="fc" id="L189">        List&lt;FeedbackDimensionDto&gt; dimensionDtos = createDto.getDimensions().stream()</span>
+<span class="fc" id="L190">                .map(dimensionRequest -&gt; {</span>
+<span class="fc" id="L191">                    CreateFeedbackDimensionDto dimensionDto = CreateFeedbackDimensionDto.builder()</span>
+<span class="fc" id="L192">                            .feedbackId(savedFeedback.getId())</span>
+<span class="fc" id="L193">                            .dimensionDefinitionId(dimensionRequest.getDimensionDefinitionId())</span>
+<span class="fc" id="L194">                            .rating(dimensionRequest.getRating())</span>
+<span class="fc" id="L195">                            .comment(dimensionRequest.getComment())</span>
+<span class="fc" id="L196">                            .build();</span>
+<span class="fc" id="L197">                    return feedbackDimensionService.createFeedbackDimension(dimensionDto);</span>
+                })
+<span class="fc" id="L199">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L201">        log.info(&quot;Created {} feedback dimensions&quot;, dimensionDtos.size());</span>
+
+<span class="fc" id="L203">        List&lt;FeedbackCommentDto&gt; commentDtos = Collections.emptyList();</span>
+<span class="pc bpc" id="L204" title="2 of 4 branches missed.">        if (createDto.getFeedbackComments() != null &amp;&amp; !createDto.getFeedbackComments().isEmpty()) {</span>
+<span class="fc" id="L205">            commentDtos = createDto.getFeedbackComments().stream()</span>
+<span class="fc" id="L206">                    .map(commentRequest -&gt; {</span>
+<span class="fc" id="L207">                        CreateFeedbackCommentDto commentDto = CreateFeedbackCommentDto.builder()</span>
+<span class="fc" id="L208">                                .feedbackId(savedFeedback.getId())</span>
+<span class="fc" id="L209">                                .commentId(commentRequest.getCommentId())</span>
+<span class="fc" id="L210">                                .feedbackCommentBody(commentRequest.getFeedbackCommentBody())</span>
+<span class="fc" id="L211">                                .build();</span>
+<span class="fc" id="L212">                        return feedbackCommentService.createFeedbackComment(commentDto);</span>
+                    })
+<span class="fc" id="L214">                    .collect(Collectors.toList());</span>
+        }
+
+<span class="fc" id="L217">        log.info(&quot;Created {} feedback comments&quot;, commentDtos.size());</span>
+
+        // Publish feedback created event
+        try {
+<span class="nc" id="L221">            feedbackEventProducer.publishFeedbackCreated(savedFeedback);</span>
+<span class="nc" id="L222">            log.info(&quot;Feedback created event published successfully for feedbackId={}&quot;,</span>
+<span class="nc" id="L223">                    savedFeedback.getId());</span>
+<span class="fc" id="L224">        } catch (Exception e) {</span>
+<span class="fc" id="L225">            log.error(&quot;Failed to publish feedback created event for feedbackId={}: {}&quot;,</span>
+<span class="fc" id="L226">                    savedFeedback.getId(), e.getMessage(), e);</span>
+            // Don't fail the transaction if event publishing fails
+<span class="nc" id="L228">        }</span>
+
+<span class="fc" id="L230">        return FeedbackDto.builder()</span>
+<span class="fc" id="L231">                .id(savedFeedback.getId())</span>
+<span class="fc" id="L232">                .managerId(savedFeedback.getManagerId())</span>
+<span class="fc" id="L233">                .developerId(savedFeedback.getDeveloperId())</span>
+<span class="fc" id="L234">                .feedbackVersion(savedFeedback.getFeedbackVersion())</span>
+<span class="fc" id="L235">                .dimensions(dimensionDtos)</span>
+<span class="fc" id="L236">                .feedbackComments(commentDtos)</span>
+<span class="fc" id="L237">                .createdAt(savedFeedback.getCreatedAt())</span>
+<span class="fc" id="L238">                .updatedAt(savedFeedback.getUpdatedAt())</span>
+<span class="fc" id="L239">                .build();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FeedbackDto getCompleteFeedback(UUID id) {
+<span class="fc" id="L245">        Feedback feedback = feedbackRepository.findById(id)</span>
+<span class="pc" id="L246">                .orElseThrow(() -&gt; new FeedbackNotFoundException(&quot;Feedback not found with id: &quot; + id));</span>
+
+<span class="fc" id="L248">        List&lt;FeedbackDimensionDto&gt; dimensions = feedbackDimensionService</span>
+<span class="fc" id="L249">                .getFeedbackDimensionsByFeedbackId(feedback.getId());</span>
+
+<span class="fc" id="L251">        List&lt;FeedbackCommentDto&gt; comments = feedbackCommentService</span>
+<span class="fc" id="L252">                .getFeedbackCommentsByFeedbackId(feedback.getId());</span>
+
+<span class="fc" id="L254">        return FeedbackDto.builder()</span>
+<span class="fc" id="L255">                .id(feedback.getId())</span>
+<span class="fc" id="L256">                .managerId(feedback.getManagerId())</span>
+<span class="fc" id="L257">                .developerId(feedback.getDeveloperId())</span>
+<span class="fc" id="L258">                .feedbackVersion(feedback.getFeedbackVersion())</span>
+<span class="fc" id="L259">                .dimensions(dimensions)</span>
+<span class="fc" id="L260">                .feedbackComments(comments)</span>
+<span class="fc" id="L261">                .createdAt(feedback.getCreatedAt())</span>
+<span class="fc" id="L262">                .updatedAt(feedback.getUpdatedAt())</span>
+<span class="fc" id="L263">                .build();</span>
+    }
+
+    @Override
+    public FeedbackDto updateCompleteFeedback(UUID id, CreateCompleteFeedbackDto updateDto) {
+<span class="nc" id="L268">        Feedback feedback = feedbackRepository.findById(id)</span>
+<span class="nc" id="L269">                .orElseThrow(() -&gt; new FeedbackNotFoundException(&quot;Feedback not found with id: &quot; + id));</span>
+
+<span class="nc" id="L271">        feedback.setManagerId(updateDto.getManagerId());</span>
+<span class="nc" id="L272">        feedback.setDeveloperId(updateDto.getDeveloperId());</span>
+<span class="nc" id="L273">        feedback.setFeedbackVersion(updateDto.getFeedbackVersion());</span>
+
+<span class="nc" id="L275">        Feedback updatedFeedback = feedbackRepository.save(feedback);</span>
+
+        // Publish feedback updated event
+        try {
+<span class="nc" id="L279">            feedbackEventProducer.publishFeedbackUpdated(updatedFeedback);</span>
+<span class="nc" id="L280">            log.info(&quot;Feedback updated event published successfully for feedbackId={}&quot;, id);</span>
+<span class="nc" id="L281">        } catch (Exception e) {</span>
+<span class="nc" id="L282">            log.error(&quot;Failed to publish feedback updated event for feedbackId={}: {}&quot;,</span>
+<span class="nc" id="L283">                    id, e.getMessage(), e);</span>
+            // Don't fail the transaction if event publishing fails
+<span class="nc" id="L285">        }</span>
+
+<span class="nc" id="L287">        return getCompleteFeedback(updatedFeedback.getId());</span>
+    }
+
+    private FeedbackDto mapToDto(Feedback feedback) {
+<span class="fc" id="L291">        return FeedbackDto.builder()</span>
+<span class="fc" id="L292">                .id(feedback.getId())</span>
+<span class="fc" id="L293">                .managerId(feedback.getManagerId())</span>
+<span class="fc" id="L294">                .developerId(feedback.getDeveloperId())</span>
+<span class="fc" id="L295">                .feedbackVersion(feedback.getFeedbackVersion())</span>
+<span class="fc" id="L296">                .createdAt(feedback.getCreatedAt())</span>
+<span class="fc" id="L297">                .updatedAt(feedback.getUpdatedAt())</span>
+<span class="fc" id="L298">                .dimensions(Collections.emptyList())</span>
+<span class="fc" id="L299">                .feedbackComments(Collections.emptyList())</span>
+<span class="fc" id="L300">                .build();</span>
+    }
+
+    private FeedbackDto mapToDtoWithDetails(Feedback feedback) {
+<span class="nc" id="L304">        List&lt;FeedbackDimensionDto&gt; dimensions = feedbackDimensionService</span>
+<span class="nc" id="L305">                .getFeedbackDimensionsByFeedbackId(feedback.getId());</span>
+
+<span class="nc" id="L307">        List&lt;FeedbackCommentDto&gt; comments = feedbackCommentService</span>
+<span class="nc" id="L308">                .getFeedbackCommentsByFeedbackId(feedback.getId());</span>
+
+<span class="nc" id="L310">        return FeedbackDto.builder()</span>
+<span class="nc" id="L311">                .id(feedback.getId())</span>
+<span class="nc" id="L312">                .managerId(feedback.getManagerId())</span>
+<span class="nc" id="L313">                .developerId(feedback.getDeveloperId())</span>
+<span class="nc" id="L314">                .feedbackVersion(feedback.getFeedbackVersion())</span>
+<span class="nc" id="L315">                .createdAt(feedback.getCreatedAt())</span>
+<span class="nc" id="L316">                .updatedAt(feedback.getUpdatedAt())</span>
+<span class="nc" id="L317">                .dimensions(dimensions)</span>
+<span class="nc" id="L318">                .feedbackComments(comments)</span>
+<span class="nc" id="L319">                .build();</span>
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponseDTO&lt;FeedbackDto&gt; searchFeedbacks(FeedbackSearchCriteria criteria, Pageable pageable) {
+<span class="nc" id="L324">        log.info(&quot;Searching feedbacks with criteria: managerId={}, developerId={}, version={}, createdAfter={}, createdBefore={}&quot;,</span>
+<span class="nc" id="L325">                criteria.getManagerId(), criteria.getDeveloperId(), criteria.getFeedbackVersion(),</span>
+<span class="nc" id="L326">                criteria.getCreatedAfter(), criteria.getCreatedBefore());</span>
+
+<span class="nc" id="L328">        Specification&lt;Feedback&gt; specification = FeedbackSpecification.createSpecification(criteria);</span>
+<span class="nc" id="L329">        Page&lt;Feedback&gt; feedbackPage = feedbackRepository.findAll(specification, pageable);</span>
+
+<span class="nc" id="L331">        log.info(&quot;Found {} feedbacks matching criteria&quot;, feedbackPage.getTotalElements());</span>
+
+<span class="nc" id="L333">        return PaginationUtil.toPaginatedResponse(</span>
+<span class="nc" id="L334">                feedbackPage.map(this::mapToDto)</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

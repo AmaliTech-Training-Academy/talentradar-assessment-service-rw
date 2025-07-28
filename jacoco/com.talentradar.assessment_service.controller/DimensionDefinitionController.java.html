@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DimensionDefinitionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.controller</a> &gt; <span class="el_source">DimensionDefinitionController.java</span></div><h1>DimensionDefinitionController.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.controller;
+
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.CreateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.UpdateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.response.DimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.api.ApiResponse;
+import com.talentradar.assessment_service.dto.gradingCriteria.request.CreateGradingCriteriaDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.request.UpdateGradingCriteriaDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.response.GradingCriteriaDto;
+import com.talentradar.assessment_service.service.DimensionDefinitionService;
+import com.talentradar.assessment_service.service.GradingCriteriaService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/v1/dimensions&quot;)
+@RequiredArgsConstructor
+public class DimensionDefinitionController {
+
+    private final DimensionDefinitionService dimensionDefinitionService;
+    private final GradingCriteriaService gradingCriteriaService;
+
+    @GetMapping
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;DimensionDefinitionDto&gt;&gt;&gt; getAllDimensions() {
+<span class="nc" id="L31">        List&lt;DimensionDefinitionDto&gt; dimensions = dimensionDefinitionService.getAllDimensions();</span>
+<span class="nc" id="L32">        return ResponseEntity.ok(ApiResponse.success(dimensions, &quot;Dimensions retrieved successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;DimensionDefinitionDto&gt;&gt; getDimensionById(@PathVariable UUID id) {
+<span class="nc" id="L37">        DimensionDefinitionDto dimension = dimensionDefinitionService.getDimensionById(id);</span>
+<span class="nc" id="L38">        return ResponseEntity.ok(ApiResponse.success(dimension, &quot;Dimension retrieved successfully&quot;));</span>
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;ApiResponse&lt;DimensionDefinitionDto&gt;&gt; createDimension(
+            @Valid @RequestBody CreateDimensionDefinitionDto createDto) {
+<span class="nc" id="L44">        DimensionDefinitionDto createdDimension = dimensionDefinitionService.createDimension(createDto);</span>
+<span class="nc" id="L45">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L46">                .body(ApiResponse.success(createdDimension, &quot;Dimension created successfully&quot;));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;DimensionDefinitionDto&gt;&gt; updateDimension(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateDimensionDefinitionDto updateDto) {
+<span class="nc" id="L53">        DimensionDefinitionDto updatedDimension = dimensionDefinitionService.updateDimension(id, updateDto);</span>
+<span class="nc" id="L54">        return ResponseEntity.ok(ApiResponse.success(updatedDimension, &quot;Dimension updated successfully&quot;));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; deleteDimension(@PathVariable UUID id) {
+<span class="nc" id="L59">        dimensionDefinitionService.deleteDimension(id);</span>
+<span class="nc" id="L60">        return ResponseEntity.ok(ApiResponse.success(&quot;Dimension deleted successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/exists/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Boolean&gt;&gt; checkDimensionExists(@PathVariable UUID id) {
+<span class="nc" id="L65">        boolean exists = dimensionDefinitionService.dimensionExists(id);</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        String message = exists ? &quot;Dimension exists&quot; : &quot;Dimension does not exist&quot;;</span>
+<span class="nc" id="L67">        return ResponseEntity.ok(ApiResponse.success(exists, message));</span>
+    }
+
+    @PostMapping(&quot;/batch&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;DimensionDefinitionDto&gt;&gt;&gt; getDimensionsByIds(
+            @RequestBody List&lt;UUID&gt; ids) {
+<span class="nc" id="L73">        List&lt;DimensionDefinitionDto&gt; dimensions = dimensionDefinitionService.getDimensionsByIds(ids);</span>
+<span class="nc" id="L74">        return ResponseEntity.ok(ApiResponse.success(dimensions, &quot;Dimensions retrieved successfully&quot;));</span>
+    }
+
+    // ============= GRADING CRITERIA ENDPOINTS =============
+
+    @GetMapping(&quot;/grading-criteria&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;GradingCriteriaDto&gt;&gt;&gt; getAllGradingCriteria() {
+<span class="nc" id="L81">        List&lt;GradingCriteriaDto&gt; gradingCriteria = gradingCriteriaService.getAllGradingCriteria();</span>
+<span class="nc" id="L82">        return ResponseEntity.ok(ApiResponse.success(gradingCriteria, &quot;Grading criteria retrieved successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/grading-criteria/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;GradingCriteriaDto&gt;&gt; getGradingCriteriaById(@PathVariable UUID id) {
+<span class="nc" id="L87">        GradingCriteriaDto gradingCriteria = gradingCriteriaService.getGradingCriteriaById(id);</span>
+<span class="nc" id="L88">        return ResponseEntity.ok(ApiResponse.success(gradingCriteria, &quot;Grading criteria retrieved successfully&quot;));</span>
+    }
+
+    @PostMapping(&quot;/grading-criteria&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;GradingCriteriaDto&gt;&gt; createGradingCriteria(
+            @Valid @RequestBody CreateGradingCriteriaDto createDto) {
+<span class="nc" id="L94">        GradingCriteriaDto createdGradingCriteria = gradingCriteriaService.createGradingCriteria(createDto);</span>
+<span class="nc" id="L95">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L96">                .body(ApiResponse.success(createdGradingCriteria, &quot;Grading criteria created successfully&quot;));</span>
+    }
+
+    @PutMapping(&quot;/grading-criteria/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;GradingCriteriaDto&gt;&gt; updateGradingCriteria(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateGradingCriteriaDto updateDto) {
+<span class="nc" id="L103">        GradingCriteriaDto updatedGradingCriteria = gradingCriteriaService.updateGradingCriteria(id, updateDto);</span>
+<span class="nc" id="L104">        return ResponseEntity.ok(ApiResponse.success(updatedGradingCriteria, &quot;Grading criteria updated successfully&quot;));</span>
+    }
+
+    @DeleteMapping(&quot;/grading-criteria/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; deleteGradingCriteria(@PathVariable UUID id) {
+<span class="nc" id="L109">        gradingCriteriaService.deleteGradingCriteria(id);</span>
+<span class="nc" id="L110">        return ResponseEntity.ok(ApiResponse.success(&quot;Grading criteria deleted successfully&quot;));</span>
+    }
+
+    @GetMapping(&quot;/grading-criteria/exists/{id}&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Boolean&gt;&gt; checkGradingCriteriaExists(@PathVariable UUID id) {
+<span class="nc" id="L115">        boolean exists = gradingCriteriaService.gradingCriteriaExists(id);</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        String message = exists ? &quot;Grading criteria exists&quot; : &quot;Grading criteria does not exist&quot;;</span>
+<span class="nc" id="L117">        return ResponseEntity.ok(ApiResponse.success(exists, message));</span>
+    }
+
+    @PostMapping(&quot;/grading-criteria/batch&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;GradingCriteriaDto&gt;&gt;&gt; getGradingCriteriaByIds(
+            @RequestBody List&lt;UUID&gt; ids) {
+<span class="nc" id="L123">        List&lt;GradingCriteriaDto&gt; gradingCriteria = gradingCriteriaService.getGradingCriteriaByIds(ids);</span>
+<span class="nc" id="L124">        return ResponseEntity.ok(ApiResponse.success(gradingCriteria, &quot;Grading criteria retrieved successfully&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssessmentController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.controller</a> &gt; <span class="el_source">AssessmentController.java</span></div><h1>AssessmentController.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.controller;
+
+import com.talentradar.assessment_service.dto.assessment.request.AssessmentRequestDTO;
+import com.talentradar.assessment_service.dto.assessment.response.AssessmentResponseDTO;
+import com.talentradar.assessment_service.dto.api.ApiResponse;
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
+import com.talentradar.assessment_service.service.AssessmentService;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/v1/assessments&quot;)
+@RequiredArgsConstructor
+public class AssessmentController {
+
+    private final AssessmentService assessmentService;
+
+    @PostMapping
+    @PreAuthorize(&quot;hasRole('DEVELOPER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;AssessmentResponseDTO&gt;&gt; createAssessment(
+            @Valid @RequestBody AssessmentRequestDTO requestDto,
+            @Parameter(hidden = true) @RequestHeader(&quot;X-User-Id&quot;) String userIdStr
+    ) {
+<span class="nc" id="L33">        UUID userId = UUID.fromString(userIdStr);</span>
+<span class="nc" id="L34">        AssessmentResponseDTO response = assessmentService.createAssessment(requestDto, userId);</span>
+<span class="nc" id="L35">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L36">                .body(ApiResponse.success(response, &quot;Assessment submitted successfully&quot;));</span>
+    }
+
+    @GetMapping
+    @PreAuthorize(&quot;hasRole('DEVELOPER') or hasRole('MANAGER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;PaginatedResponseDTO&lt;AssessmentResponseDTO&gt;&gt;&gt; getUserAssessments(
+            @RequestHeader(&quot;X-User-Id&quot;) UUID userId,
+            @ParameterObject Pageable pageable) {
+
+<span class="nc" id="L45">        PaginatedResponseDTO&lt;AssessmentResponseDTO&gt; pagedAssessments = assessmentService.getAllAssessmentsByUser(userId, pageable);</span>
+<span class="nc" id="L46">        return ResponseEntity.ok(ApiResponse.success(pagedAssessments));</span>
+    }
+
+    @PutMapping(&quot;/{assessmentId}&quot;)
+    @PreAuthorize(&quot;hasRole('DEVELOPER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;AssessmentResponseDTO&gt;&gt; updateAssessment(
+            @PathVariable UUID assessmentId,
+            @Valid @RequestBody AssessmentRequestDTO requestDto,
+            @Parameter(hidden = true) @RequestHeader(&quot;X-User-Id&quot;) String userIdStr
+    ) {
+<span class="nc" id="L56">        UUID userId = UUID.fromString(userIdStr);</span>
+<span class="nc" id="L57">        AssessmentResponseDTO response = assessmentService.updateAssessment(assessmentId, requestDto, userId);</span>
+<span class="nc" id="L58">        return ResponseEntity.ok(ApiResponse.success(response, &quot;Assessment updated successfully&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

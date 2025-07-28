@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserEventConsumer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.event.rabbit.consumer</a> &gt; <span class="el_source">UserEventConsumer.java</span></div><h1>UserEventConsumer.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.event.rabbit.consumer;
+
+import com.rabbitmq.client.Channel;
+import com.talentradar.assessment_service.config.RabbitMQConfig;
+import com.talentradar.assessment_service.event.UserEvent;
+import com.talentradar.assessment_service.model.UserRole;
+import com.talentradar.assessment_service.model.UserSnapshot;
+import com.talentradar.assessment_service.repository.UserSnapshotRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+@Component
+@RequiredArgsConstructor
+<span class="fc" id="L20">@Slf4j</span>
+public class UserEventConsumer {
+
+
+    private final UserSnapshotRepository userSnapshotRepository;
+
+    // Single listener method for the queue - handles all user events
+    @RabbitListener(queues = RabbitMQConfig.USER_UPDATED_KEY)
+    @RabbitListener(queues = RabbitMQConfig.USER_CREATED_KEY)
+    @Transactional
+    public void handleUserEvent(UserEvent userEvent, Message message, Channel channel) {
+        try {
+<span class="fc" id="L32">            log.info(&quot;👍 Received user event: {} for user: {}&quot;, userEvent.getEventType(), userEvent.getUserId());</span>
+<span class="fc" id="L33">            log.debug(&quot;Event data: {}&quot;, userEvent);</span>
+
+            // Handle different event types
+<span class="pc bpc" id="L36" title="1 of 3 branches missed.">            switch (userEvent.getEventType().name()) {</span>
+                case &quot;USER_CREATED&quot;:
+                case &quot;USER_UPDATED&quot;:
+<span class="fc" id="L39">                    handleUserCreatedOrUpdated(userEvent);</span>
+<span class="fc" id="L40">                    break;</span>
+                case &quot;USER_DELETED&quot;:
+<span class="fc" id="L42">                    handleUserDeleted(userEvent);</span>
+<span class="fc" id="L43">                    break;</span>
+                default:
+<span class="nc" id="L45">                    log.warn(&quot;Unknown event type: {}&quot;, userEvent.getEventType());</span>
+            }
+
+            // Acknowledge the message
+<span class="fc" id="L49">            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);</span>
+<span class="fc" id="L50">            log.info(&quot;Successfully processed user event: {} for user: {}&quot;,</span>
+<span class="fc" id="L51">                    userEvent.getEventType(), userEvent.getUserId());</span>
+
+<span class="fc" id="L53">        } catch (Exception e) {</span>
+<span class="fc" id="L54">            log.error(&quot;Error processing user event: {}&quot;, e.getMessage(), e);</span>
+            try {
+                // Reject and requeue the message
+<span class="fc" id="L57">                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);</span>
+<span class="fc" id="L58">            } catch (Exception nackError) {</span>
+<span class="fc" id="L59">                log.error(&quot;Failed to nack message: {}&quot;, nackError.getMessage());</span>
+<span class="fc" id="L60">            }</span>
+<span class="fc" id="L61">        }</span>
+<span class="fc" id="L62">    }</span>
+
+    private void handleUserCreatedOrUpdated(UserEvent userEvent) {
+        try {
+<span class="fc" id="L66">            log.info(&quot;Processing user created/updated event for userId: {}&quot;, userEvent.getUserId());</span>
+
+<span class="fc" id="L68">            Optional&lt;UserSnapshot&gt; existingSnapshot = userSnapshotRepository.findByUserId(userEvent.getUserId());</span>
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (existingSnapshot.isPresent()) {</span>
+                // Update existing snapshot
+<span class="fc" id="L72">                UserSnapshot snapshot = existingSnapshot.get();</span>
+<span class="fc" id="L73">                snapshot.setManagerId(existingSnapshot.get().getManagerId());</span>
+<span class="fc" id="L74">                snapshot.setFullName(userEvent.getFullName());</span>
+<span class="fc" id="L75">                snapshot.setUsername(userEvent.getUsername());</span>
+<span class="fc" id="L76">                snapshot.setRole(UserRole.valueOf(existingSnapshot.get().getRole().name()));</span>
+<span class="fc" id="L77">                snapshot.setId(existingSnapshot.get().getId());</span>
+<span class="fc" id="L78">                snapshot.setUserId(existingSnapshot.get().getUserId());</span>
+<span class="fc" id="L79">                snapshot.setEmail(existingSnapshot.get().getEmail());</span>
+
+<span class="fc" id="L81">                userSnapshotRepository.save(snapshot);</span>
+<span class="fc" id="L82">                log.info(&quot;Updated user snapshot for userId: {}&quot;, userEvent.getUserId());</span>
+<span class="fc" id="L83">            } else {</span>
+                // Create new snapshot
+<span class="fc" id="L85">                UserSnapshot snapshot = UserSnapshot.builder()</span>
+<span class="fc" id="L86">                        .userId(userEvent.getUserId())</span>
+<span class="fc" id="L87">                        .managerId(userEvent.getManagerId())</span>
+<span class="fc" id="L88">                        .fullName(userEvent.getFullName())</span>
+<span class="fc" id="L89">                        .username(userEvent.getUsername())</span>
+<span class="fc" id="L90">                        .email(userEvent.getEmail())</span>
+<span class="fc" id="L91">                        .role(UserRole.valueOf(userEvent.getRole().name()))</span>
+<span class="fc" id="L92">                        .build();</span>
+
+<span class="fc" id="L94">                userSnapshotRepository.save(snapshot);</span>
+<span class="fc" id="L95">                log.info(&quot;Created new user snapshot for userId: {}&quot;, userEvent.getUserId());</span>
+            }
+<span class="fc" id="L97">        } catch (Exception e) {</span>
+<span class="fc" id="L98">            log.error(&quot;Error handling user created/updated: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L99">            throw e; // Re-throw to trigger message requeue</span>
+<span class="fc" id="L100">        }</span>
+<span class="fc" id="L101">    }</span>
+
+    private void handleUserDeleted(UserEvent userEvent) {
+        try {
+<span class="fc" id="L105">            log.info(&quot;Processing user deleted event for userId: {}&quot;, userEvent.getUserId());</span>
+
+<span class="fc" id="L107">            Optional&lt;UserSnapshot&gt; existingSnapshot = userSnapshotRepository.findByUserId(userEvent.getUserId());</span>
+
+<span class="fc bfc" id="L109" title="All 2 branches covered.">            if (existingSnapshot.isPresent()) {</span>
+<span class="fc" id="L110">                userSnapshotRepository.delete(existingSnapshot.get());</span>
+<span class="fc" id="L111">                log.info(&quot;Deleted user snapshot for userId: {}&quot;, userEvent.getUserId());</span>
+            } else {
+<span class="fc" id="L113">                log.warn(&quot;Attempted to delete non-existent user snapshot for userId: {}&quot;, userEvent.getUserId());</span>
+            }
+<span class="fc" id="L115">        } catch (Exception e) {</span>
+<span class="fc" id="L116">            log.error(&quot;Error handling user deleted: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L117">            throw e; // Re-throw to trigger message requeue</span>
+<span class="fc" id="L118">        }</span>
+<span class="fc" id="L119">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

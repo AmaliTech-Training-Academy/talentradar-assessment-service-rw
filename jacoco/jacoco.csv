@@ -1,0 +1,29 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+test,com.talentradar.assessment_service.event.rabbit.producer,AssessmentEventProducer.new Object() {...},30,6,2,0,6,1,7,1,6,1
+test,com.talentradar.assessment_service.event.rabbit.producer,FeedbackEventProducer,231,0,6,0,70,0,16,0,12,0
+test,com.talentradar.assessment_service.event.rabbit.producer,AssessmentEventProducer,0,230,0,2,0,63,0,7,0,6
+test,com.talentradar.assessment_service.event.rabbit.producer,FeedbackEventProducer.new Object() {...},23,0,0,0,7,0,7,0,7,0
+test,com.talentradar.assessment_service.controller,UserSnapshotController,50,0,4,0,15,0,6,0,4,0
+test,com.talentradar.assessment_service.controller,DimensionDefinitionController,154,0,4,0,32,0,16,0,14,0
+test,com.talentradar.assessment_service.controller,AssessmentController,41,0,0,0,9,0,3,0,3,0
+test,com.talentradar.assessment_service.controller,FeedbackController,203,0,2,0,42,0,20,0,19,0
+test,com.talentradar.assessment_service.model,SubmissionStatus,0,15,0,0,0,2,0,1,0,1
+test,com.talentradar.assessment_service.model,Assessment,11,0,0,0,5,0,2,0,2,0
+test,com.talentradar.assessment_service.model,AssessmentDimension,4,0,0,0,2,0,1,0,1,0
+test,com.talentradar.assessment_service.model,UserRole,0,15,0,0,0,2,0,1,0,1
+test,com.talentradar.assessment_service.event,Role,0,15,0,0,0,2,0,1,0,1
+test,com.talentradar.assessment_service.event,EventType,0,21,0,0,0,2,0,1,0,1
+test,com.talentradar.assessment_service.event,AssessmentEventType,0,15,0,0,0,2,0,1,0,1
+test,com.talentradar.assessment_service.event,FeedbackEventType,27,0,0,0,2,0,1,0,1,0
+test,com.talentradar.assessment_service.util,PaginationUtil,3,27,0,0,1,11,1,1,1,1
+test,com.talentradar.assessment_service.service.impl,FeedbackServiceImpl,329,364,2,2,75,100,18,12,16,12
+test,com.talentradar.assessment_service.service.impl,DimensionDefinitionServiceImpl,88,169,10,8,21,44,11,12,4,10
+test,com.talentradar.assessment_service.service.impl,GradingCriteriaServiceImpl,12,119,0,2,4,28,1,11,1,10
+test,com.talentradar.assessment_service.service.impl,FeedbackDimensionServiceImpl,27,138,1,3,2,42,3,7,2,6
+test,com.talentradar.assessment_service.service.impl,AssessmentServiceImpl,20,447,0,10,3,99,0,17,0,12
+test,com.talentradar.assessment_service.service.impl,CommentServiceImpl,0,127,0,2,0,31,0,12,0,11
+test,com.talentradar.assessment_service.service.impl,UserSnapshotServiceImpl,0,242,0,10,0,52,0,17,0,12
+test,com.talentradar.assessment_service.service.impl,FeedbackCommentServiceImpl,0,94,0,0,0,25,0,5,0,5
+test,com.talentradar.assessment_service.service.impl,FeedbackAnalysisService,24,178,1,7,8,48,2,9,1,6
+test,com.talentradar.assessment_service.event.rabbit.consumer,UserEventConsumer,5,224,1,6,1,59,1,7,0,4
+test,com.talentradar.assessment_service.repository.specification,FeedbackSpecification,83,0,10,0,14,0,8,0,3,0

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FeedbackEventProducer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.event.rabbit.producer</a> &gt; <span class="el_source">FeedbackEventProducer.java</span></div><h1>FeedbackEventProducer.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.event.rabbit.producer;
+
+import com.talentradar.assessment_service.config.RabbitMQConfig;
+import com.talentradar.assessment_service.dto.analysis.FeedbackAnalysisDto;
+import com.talentradar.assessment_service.event.FeedbackEvent;
+import com.talentradar.assessment_service.event.FeedbackEventType;
+import com.talentradar.assessment_service.event.UserContext;
+import com.talentradar.assessment_service.model.Feedback;
+import com.talentradar.assessment_service.model.UserSnapshot;
+import com.talentradar.assessment_service.repository.UserSnapshotRepository;
+import com.talentradar.assessment_service.service.impl.FeedbackAnalysisService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+<span class="nc" id="L22">@Slf4j</span>
+public class FeedbackEventProducer {
+    private final RabbitTemplate rabbitTemplate;
+    private final UserSnapshotRepository userSnapshotRepository;
+    private final FeedbackAnalysisService feedbackAnalysisService;
+
+    public void publishFeedbackCreated(Feedback feedback) {
+<span class="nc" id="L29">        publishFeedbackEvent(feedback, FeedbackEventType.FEEDBACK_CREATED);</span>
+
+        // Also publish feedback.submitted event for analysis
+<span class="nc" id="L32">        publishFeedbackSubmittedForAnalysis(feedback);</span>
+<span class="nc" id="L33">    }</span>
+
+    public void publishFeedbackUpdated(Feedback feedback) {
+<span class="nc" id="L36">        publishFeedbackEvent(feedback, FeedbackEventType.FEEDBACK_UPDATED);</span>
+<span class="nc" id="L37">    }</span>
+
+    public void publishFeedbackDeleted(Feedback feedback) {
+<span class="nc" id="L40">        publishFeedbackEvent(feedback, FeedbackEventType.FEEDBACK_DELETED);</span>
+<span class="nc" id="L41">    }</span>
+
+    public void publishFeedbackVersionCreated(Feedback feedback) {
+<span class="nc" id="L44">        publishFeedbackEvent(feedback, FeedbackEventType.FEEDBACK_VERSION_CREATED);</span>
+<span class="nc" id="L45">    }</span>
+
+    /**
+     * Publishes a feedback.submitted event with combined assessment and feedback data for AI analysis
+     */
+    private void publishFeedbackSubmittedForAnalysis(Feedback feedback) {
+        try {
+<span class="nc" id="L52">            log.info(&quot;Publishing feedback.submitted event for analysis - feedbackId: {}&quot;, feedback.getId());</span>
+
+            // Create the combined analysis DTO
+<span class="nc" id="L55">            FeedbackAnalysisDto analysisDto = feedbackAnalysisService.createAnalysisDto(feedback);</span>
+
+            // Send to analysis queue using the feedback.submitted routing key
+<span class="nc" id="L58">            rabbitTemplate.convertAndSend(</span>
+                    RabbitMQConfig.ANALYSIS_EVENTS_EXCHANGE,
+                    RabbitMQConfig.FEEDBACK_SUBMITTED_KEY,
+                    analysisDto
+            );
+
+<span class="nc" id="L64">            log.info(&quot;Successfully published feedback.submitted event for analysis - userId: {}, feedbackId: {}&quot;,</span>
+<span class="nc" id="L65">                    analysisDto.getUserId(), feedback.getId());</span>
+
+<span class="nc" id="L67">        } catch (Exception e) {</span>
+<span class="nc" id="L68">            log.error(&quot;Error publishing feedback.submitted event for analysis - feedbackId: {}: {}&quot;,</span>
+<span class="nc" id="L69">                    feedback.getId(), e.getMessage(), e);</span>
+            // Don't throw exception to avoid breaking the main feedback creation flow
+<span class="nc" id="L71">        }</span>
+<span class="nc" id="L72">    }</span>
+
+    private void publishFeedbackEvent(Feedback feedback, FeedbackEventType eventType) {
+        try {
+<span class="nc" id="L76">            UserContext managerContext = getUserContext(feedback.getManagerId());</span>
+<span class="nc" id="L77">            UserContext developerContext = getUserContext(feedback.getDeveloperId());</span>
+
+<span class="nc" id="L79">            FeedbackEvent feedbackEvent = FeedbackEvent.builder()</span>
+<span class="nc" id="L80">                    .eventType(eventType)</span>
+<span class="nc" id="L81">                    .feedbackId(feedback.getId())</span>
+<span class="nc" id="L82">                    .managerId(feedback.getManagerId())</span>
+<span class="nc" id="L83">                    .developerId(feedback.getDeveloperId())</span>
+<span class="nc" id="L84">                    .feedbackVersion(feedback.getFeedbackVersion())</span>
+<span class="nc" id="L85">                    .timestamp(LocalDateTime.now())</span>
+<span class="nc" id="L86">                    .eventId(UUID.randomUUID().toString())</span>
+<span class="nc" id="L87">                    .source(&quot;assessment-service&quot;)</span>
+<span class="nc" id="L88">                    .managerContext(managerContext)</span>
+<span class="nc" id="L89">                    .developerContext(developerContext)</span>
+<span class="nc" id="L90">                    .build();</span>
+
+            // Send to feedback events exchange
+<span class="nc" id="L93">            rabbitTemplate.convertAndSend(</span>
+                    RabbitMQConfig.FEEDBACK_EVENTS_EXCHANGE,
+<span class="nc" id="L95">                    getRoutingKey(eventType),</span>
+                    feedbackEvent
+            );
+
+            // Also send to notification service if it's a creation event
+<span class="nc bnc" id="L100" title="All 2 branches missed.">            if (eventType == FeedbackEventType.FEEDBACK_CREATED) {</span>
+<span class="nc" id="L101">                rabbitTemplate.convertAndSend(</span>
+                        RabbitMQConfig.NOTIFICATION_EVENTS_EXCHANGE,
+                        RabbitMQConfig.FEEDBACK_CREATED_KEY,
+<span class="nc" id="L104">                        createNotificationEvent(feedbackEvent, developerContext)</span>
+                );
+            }
+
+<span class="nc" id="L108">            log.info(&quot;Successfully published feedback event: {} for feedbackId: {}&quot;,</span>
+<span class="nc" id="L109">                    eventType, feedback.getId());</span>
+
+<span class="nc" id="L111">        } catch (Exception e) {</span>
+<span class="nc" id="L112">            log.error(&quot;Error publishing feedback event {} for feedbackId: {}: {}&quot;,</span>
+<span class="nc" id="L113">                    eventType, feedback.getId(), e.getMessage(), e);</span>
+<span class="nc" id="L114">        }</span>
+<span class="nc" id="L115">    }</span>
+
+    private String getRoutingKey(FeedbackEventType eventType) {
+<span class="nc bnc" id="L118" title="All 4 branches missed.">        return switch (eventType) {</span>
+<span class="nc" id="L119">            case FEEDBACK_CREATED -&gt; &quot;feedback.created&quot;;</span>
+<span class="nc" id="L120">            case FEEDBACK_UPDATED -&gt; &quot;feedback.updated&quot;;</span>
+<span class="nc" id="L121">            case FEEDBACK_DELETED -&gt; &quot;feedback.deleted&quot;;</span>
+<span class="nc" id="L122">            case FEEDBACK_VERSION_CREATED -&gt; &quot;feedback.version.created&quot;;</span>
+        };
+    }
+
+    private UserContext getUserContext(UUID userId) {
+<span class="nc" id="L127">        return userSnapshotRepository.findByUserId(userId)</span>
+<span class="nc" id="L128">                .map(userSnapshot -&gt; UserContext.builder()</span>
+<span class="nc" id="L129">                        .userId(userSnapshot.getUserId())</span>
+<span class="nc" id="L130">                        .fullName(userSnapshot.getFullName())</span>
+<span class="nc" id="L131">                        .username(userSnapshot.getUsername())</span>
+<span class="nc" id="L132">                        .email(userSnapshot.getEmail())</span>
+<span class="nc" id="L133">                        .role(userSnapshot.getRole().name())</span>
+<span class="nc" id="L134">                        .managerId(userSnapshot.getManagerId())</span>
+<span class="nc" id="L135">                        .build())</span>
+<span class="nc" id="L136">                .orElseGet(() -&gt; {</span>
+<span class="nc" id="L137">                    log.warn(&quot;User snapshot not found for userId: {}&quot;, userId);</span>
+<span class="nc" id="L138">                    return UserContext.builder()</span>
+<span class="nc" id="L139">                            .userId(userId)</span>
+<span class="nc" id="L140">                            .fullName(&quot;Unknown User&quot;)</span>
+<span class="nc" id="L141">                            .username(&quot;unknown&quot;)</span>
+<span class="nc" id="L142">                            .email(&quot;unknown@example.com&quot;)</span>
+<span class="nc" id="L143">                            .role(&quot;UNKNOWN&quot;)</span>
+<span class="nc" id="L144">                            .build();</span>
+                });
+    }
+
+    private Object createNotificationEvent(FeedbackEvent feedbackEvent, UserContext developerContext) {
+        // Create a notification event for the notification service
+<span class="nc" id="L150">        return new Object() {</span>
+<span class="nc" id="L151">            public String getTitle() { return &quot;New Feedback Received&quot;; }</span>
+<span class="nc" id="L152">            public String getContent() { return &quot;You have received new feedback from your manager.&quot;; }</span>
+<span class="nc" id="L153">            public String getRecipientId() { return developerContext.getUserId().toString(); }</span>
+<span class="nc" id="L154">            public String getRecipientEmail() { return developerContext.getEmail(); }</span>
+<span class="nc" id="L155">            public String getType() { return &quot;IN_APP&quot;; }</span>
+<span class="nc" id="L156">            public String getCategory() { return &quot;INFO&quot;; }</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

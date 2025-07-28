@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.service.impl</a> &gt; <span class="el_source">CommentServiceImpl.java</span></div><h1>CommentServiceImpl.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.service.impl;
+
+import com.talentradar.assessment_service.dto.comment.response.CommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
+import com.talentradar.assessment_service.dto.comment.request.CreateCommentDto;
+import com.talentradar.assessment_service.exception.CommentNotFoundException;
+import com.talentradar.assessment_service.model.Comment;
+import com.talentradar.assessment_service.repository.CommentRepository;
+import com.talentradar.assessment_service.service.CommentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class CommentServiceImpl implements CommentService {
+    
+    private final CommentRepository commentRepository;
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CommentDto&gt; getAllComments() {
+<span class="fc" id="L28">        return commentRepository.findAll()</span>
+<span class="fc" id="L29">                .stream()</span>
+<span class="fc" id="L30">                .map(this::mapToDto)</span>
+<span class="fc" id="L31">                .collect(Collectors.toList());</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public CommentDto getCommentById(UUID id) {
+<span class="fc" id="L37">        Comment comment = commentRepository.findById(id)</span>
+<span class="fc" id="L38">                .orElseThrow(() -&gt; new CommentNotFoundException(&quot;Comment not found with id: &quot; + id));</span>
+<span class="fc" id="L39">        return mapToDto(comment);</span>
+    }
+    
+    @Override
+    public CommentDto createComment(CreateCommentDto createDto) {
+<span class="fc" id="L44">        Comment comment = Comment.builder()</span>
+<span class="fc" id="L45">                .commentTitle(createDto.getCommentTitle())</span>
+<span class="fc" id="L46">                .build();</span>
+        
+<span class="fc" id="L48">        Comment savedComment = commentRepository.save(comment);</span>
+<span class="fc" id="L49">        return mapToDto(savedComment);</span>
+    }
+    
+    @Override
+    public CommentDto updateComment(UUID id, CreateCommentDto updateDto) {
+<span class="fc" id="L54">        Comment comment = commentRepository.findById(id)</span>
+<span class="fc" id="L55">                .orElseThrow(() -&gt; new CommentNotFoundException(&quot;Comment not found with id: &quot; + id));</span>
+        
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (updateDto.getCommentTitle() != null) {</span>
+<span class="fc" id="L58">            comment.setCommentTitle(updateDto.getCommentTitle());</span>
+        }
+        
+<span class="fc" id="L61">        Comment updatedComment = commentRepository.save(comment);</span>
+<span class="fc" id="L62">        return mapToDto(updatedComment);</span>
+    }
+    
+    @Override
+    public void deleteComment(UUID id) {
+<span class="fc" id="L67">        Comment comment = commentRepository.findById(id)</span>
+<span class="fc" id="L68">                .orElseThrow(() -&gt; new CommentNotFoundException(&quot;Comment not found with id: &quot; + id));</span>
+<span class="fc" id="L69">        commentRepository.delete(comment);</span>
+<span class="fc" id="L70">    }</span>
+    
+    @Override
+    @Transactional(readOnly = true)
+    public boolean commentExists(UUID id) {
+<span class="fc" id="L75">        return commentRepository.existsById(id);</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CommentDto&gt; getCommentsByIds(List&lt;UUID&gt; ids) {
+<span class="fc" id="L81">        return commentRepository.findAllById(ids)</span>
+<span class="fc" id="L82">                .stream()</span>
+<span class="fc" id="L83">                .map(this::mapToDto)</span>
+<span class="fc" id="L84">                .collect(Collectors.toList());</span>
+    }
+    
+    private CommentDto mapToDto(Comment comment) {
+<span class="fc" id="L88">        return CommentDto.builder()</span>
+<span class="fc" id="L89">                .id(comment.getId())</span>
+<span class="fc" id="L90">                .commentTitle(comment.getCommentTitle())</span>
+<span class="fc" id="L91">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

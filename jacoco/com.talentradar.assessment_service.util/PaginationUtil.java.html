@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaginationUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.util</a> &gt; <span class="el_source">PaginationUtil.java</span></div><h1>PaginationUtil.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.util;
+
+import com.talentradar.assessment_service.dto.assessment.request.PaginationMetadata;
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
+import org.springframework.data.domain.Page;
+
+<span class="nc" id="L7">public class PaginationUtil {</span>
+
+    public static &lt;T&gt; PaginatedResponseDTO&lt;T&gt; toPaginatedResponse(Page&lt;T&gt; pageData) {
+<span class="fc" id="L10">        return PaginatedResponseDTO.&lt;T&gt;builder()</span>
+<span class="fc" id="L11">                .content(pageData.getContent())</span>
+<span class="fc" id="L12">                .pagination(PaginationMetadata.builder()</span>
+<span class="fc" id="L13">                        .page(pageData.getNumber())</span>
+<span class="fc" id="L14">                        .size(pageData.getSize())</span>
+<span class="fc" id="L15">                        .totalElements(pageData.getTotalElements())</span>
+<span class="fc" id="L16">                        .totalPages(pageData.getTotalPages())</span>
+<span class="fc" id="L17">                        .hasNext(pageData.hasNext())</span>
+<span class="fc" id="L18">                        .hasPrevious(pageData.hasPrevious())</span>
+<span class="fc" id="L19">                        .build())</span>
+<span class="fc" id="L20">                .build();</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

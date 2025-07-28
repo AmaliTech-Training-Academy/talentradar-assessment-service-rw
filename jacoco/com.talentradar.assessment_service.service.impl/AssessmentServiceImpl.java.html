@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssessmentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.service.impl</a> &gt; <span class="el_source">AssessmentServiceImpl.java</span></div><h1>AssessmentServiceImpl.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.service.impl;
+
+import com.talentradar.assessment_service.dto.assessment.request.AssessmentRequestDTO;
+import com.talentradar.assessment_service.dto.assessment.request.DimensionRatingDTO;
+import com.talentradar.assessment_service.dto.assessment.response.AssessmentResponseDTO;
+import com.talentradar.assessment_service.dto.assessment.response.PaginatedResponseDTO;
+//import com.talentradar.assessment_service.event.producer.AssessmentEventProducer;
+import com.talentradar.assessment_service.event.rabbit.producer.AssessmentEventProducer;
+import com.talentradar.assessment_service.exception.BadRequestException;
+import com.talentradar.assessment_service.exception.ResourceNotFoundException;
+import com.talentradar.assessment_service.mapper.AssessmentMapper;
+import com.talentradar.assessment_service.model.Assessment;
+import com.talentradar.assessment_service.model.AssessmentDimension;
+import com.talentradar.assessment_service.model.DimensionDefinition;
+import com.talentradar.assessment_service.model.SubmissionStatus;
+import com.talentradar.assessment_service.repository.AssessmentDimensionRepository;
+import com.talentradar.assessment_service.repository.AssessmentRepository;
+import com.talentradar.assessment_service.repository.DimensionDefinitionRepository;
+import com.talentradar.assessment_service.repository.UserSnapshotRepository;
+import com.talentradar.assessment_service.service.AssessmentService;
+import com.talentradar.assessment_service.util.PaginationUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L37">@Slf4j</span>
+public class AssessmentServiceImpl implements AssessmentService {
+
+    private final AssessmentRepository assessmentRepository;
+    private final AssessmentDimensionRepository dimensionRepository;
+    private final DimensionDefinitionRepository dimensionDefinitionRepository;
+    private final AssessmentMapper assessmentMapper;
+    private final UserSnapshotRepository userSnapshotRepository;
+    private final AssessmentEventProducer assessmentEventProducer;
+
+    @Transactional
+    @Override
+    public AssessmentResponseDTO createAssessment(AssessmentRequestDTO requestDto, UUID userId) {
+<span class="fc" id="L50">        log.info(&quot;Starting assessment creation for userId={}&quot;, userId);</span>
+
+
+<span class="fc" id="L53">        validateDimensionDefinitionIds(requestDto.getDimensions());</span>
+
+<span class="fc" id="L55">        reSubmissionValidation(userId);</span>
+
+        // Calculate weighted average score
+<span class="fc" id="L58">        int averageScore = calculateWeightedAverageScore(requestDto.getDimensions());</span>
+
+<span class="fc" id="L60">        Assessment assessment = Assessment.builder()</span>
+<span class="fc" id="L61">                .userId(userId)</span>
+<span class="fc" id="L62">                .reflection(requestDto.getReflection())</span>
+<span class="fc" id="L63">                .submissionStatus(requestDto.getStatus())</span>
+<span class="fc" id="L64">                .averageScore(averageScore)</span>
+<span class="fc" id="L65">                .build();</span>
+
+<span class="fc" id="L67">        Assessment savedAssessment = assessmentRepository.save(assessment);</span>
+<span class="fc" id="L68">        log.info(&quot;Assessment saved with id={} and averageScore={}&quot;, savedAssessment.getId(), averageScore);</span>
+
+        // Create new dimensions
+<span class="fc" id="L71">        createNewDimension(requestDto, savedAssessment, &quot;Saved {} assessment dimensions for assessmentId={}&quot;);</span>
+
+        // Publish assessment event to Kafka for AI analysis
+        try {
+<span class="fc" id="L75">            assessmentEventProducer.publishAssessmentSubmitted(savedAssessment);</span>
+<span class="fc" id="L76">            log.info(&quot;Assessment event published successfully for assessmentId={}&quot;, savedAssessment.getId());</span>
+<span class="fc" id="L77">        } catch (Exception e) {</span>
+<span class="fc" id="L78">            log.error(&quot;Failed to publish assessment event for assessmentId={}: {}&quot;,</span>
+<span class="fc" id="L79">                    savedAssessment.getId(), e.getMessage(), e);</span>
+            // Don't fail the transaction if event publishing fails
+<span class="fc" id="L81">        }</span>
+
+<span class="fc" id="L83">        return assessmentMapper.toResponseDto(savedAssessment);</span>
+    }
+
+    private int calculateWeightedAverageScore(List&lt;DimensionRatingDTO&gt; dimensions) {
+<span class="fc" id="L87">        log.debug(&quot;Calculating weighted average score for {} dimensions&quot;, dimensions.size());</span>
+
+<span class="fc" id="L89">        BigDecimal totalWeightedScore = BigDecimal.ZERO;</span>
+<span class="fc" id="L90">        BigDecimal totalWeight = BigDecimal.ZERO;</span>
+
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        for (DimensionRatingDTO dimension : dimensions) {</span>
+<span class="fc" id="L93">            DimensionDefinition definition = getDimension(dimension.getDimensionDefinitionId());</span>
+
+<span class="fc" id="L95">            BigDecimal rating = BigDecimal.valueOf(dimension.getRating());</span>
+<span class="fc" id="L96">            BigDecimal weight = definition.getWeight();</span>
+
+<span class="fc" id="L98">            BigDecimal weightedScore = rating.multiply(weight);</span>
+<span class="fc" id="L99">            totalWeightedScore = totalWeightedScore.add(weightedScore);</span>
+<span class="fc" id="L100">            totalWeight = totalWeight.add(weight);</span>
+
+<span class="fc" id="L102">            log.debug(&quot;Dimension: {}, Rating: {}, Weight: {}, Weighted Score: {}&quot;,</span>
+<span class="fc" id="L103">                    definition.getDimensionName(), rating, weight, weightedScore);</span>
+<span class="fc" id="L104">        }</span>
+
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {</span>
+<span class="fc" id="L107">            log.warn(&quot;Total weight is zero, returning 0 as average score&quot;);</span>
+<span class="fc" id="L108">            return 0;</span>
+        }
+
+        // Calculate weighted average and round to nearest integer
+<span class="fc" id="L112">        BigDecimal weightedAverage = totalWeightedScore.divide(totalWeight, 2, RoundingMode.HALF_UP);</span>
+<span class="fc" id="L113">        int averageScore = weightedAverage.setScale(0, RoundingMode.HALF_UP).intValue();</span>
+
+<span class="fc" id="L115">        log.debug(&quot;Total weighted score: {}, Total weight: {}, Average score: {}&quot;,</span>
+<span class="fc" id="L116">                totalWeightedScore, totalWeight, averageScore);</span>
+
+<span class="fc" id="L118">        return averageScore;</span>
+    }
+
+    private DimensionDefinition getDimension(UUID id) {
+<span class="fc" id="L122">        return dimensionDefinitionRepository.findById(id)</span>
+<span class="fc" id="L123">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;DimensionDefinition with id &quot; + id + &quot; not found&quot;));</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponseDTO&lt;AssessmentResponseDTO&gt; getAllAssessmentsByUser(UUID userId, Pageable pageable) {
+<span class="fc" id="L129">        log.info(&quot;Fetching assessments for userId={} with pagination={}&quot;, userId, pageable);</span>
+
+<span class="fc" id="L131">        Page&lt;Assessment&gt; page = assessmentRepository.findAllByUserIdWithDimensions(userId, pageable);</span>
+<span class="fc" id="L132">        log.info(&quot;Found {} assessments for userId={}&quot;, page.getTotalElements(), userId);</span>
+
+<span class="fc" id="L134">        return PaginationUtil.toPaginatedResponse(</span>
+<span class="fc" id="L135">                page.map(assessmentMapper::toResponseDto)</span>
+        );
+    }
+
+    private void validateDimensionDefinitionIds(List&lt;DimensionRatingDTO&gt; ratings) {
+<span class="fc" id="L140">        List&lt;UUID&gt; ids = ratings.stream()</span>
+<span class="fc" id="L141">                .map(DimensionRatingDTO::getDimensionDefinitionId)</span>
+<span class="fc" id="L142">                .toList();</span>
+
+<span class="fc" id="L144">        List&lt;UUID&gt; existingIds = dimensionDefinitionRepository.findExistingIds(ids);</span>
+<span class="fc" id="L145">        log.debug(&quot;Validating dimension IDs. Provided={}, Existing={}&quot;, ids.size(), existingIds.size());</span>
+
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        if (existingIds.size() != ids.size()) {</span>
+<span class="fc" id="L148">            throw new BadRequestException(&quot;Some DimensionDefinition IDs are invalid&quot;);</span>
+        }
+<span class="fc" id="L150">    }</span>
+
+    private void reSubmissionValidation(UUID userId) {
+<span class="fc" id="L153">        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);</span>
+<span class="fc" id="L154">        boolean recentlySubmitted = assessmentRepository</span>
+<span class="fc" id="L155">                .existsByUserIdAndSubmissionStatusAndCreatedAtAfter(userId, SubmissionStatus.SUBMITTED, thirtyDaysAgo);</span>
+
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (recentlySubmitted) {</span>
+<span class="fc" id="L158">            log.warn(&quot;Re-submission attempt within 30 days by userId={}&quot;, userId);</span>
+<span class="fc" id="L159">            throw new BadRequestException(&quot;User has already submitted an assessment within the last 30 days.&quot;);</span>
+        }
+<span class="fc" id="L161">    }</span>
+
+    @Transactional
+    @Override
+    public AssessmentResponseDTO updateAssessment(UUID assessmentId, AssessmentRequestDTO requestDto, UUID userId) {
+<span class="fc" id="L166">        log.info(&quot;Starting assessment update for assessmentId={} by userId={}&quot;, assessmentId, userId);</span>
+
+        // Find existing assessment
+<span class="fc" id="L169">        Assessment existingAssessment = assessmentRepository.findById(assessmentId)</span>
+<span class="fc" id="L170">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Assessment with id &quot; + assessmentId + &quot; not found&quot;));</span>
+
+        // Validate ownership - user can only update their own assessment
+<span class="fc bfc" id="L173" title="All 2 branches covered.">        if (!existingAssessment.getUserId().equals(userId)) {</span>
+<span class="fc" id="L174">            log.warn(&quot;User {} attempted to update assessment {} owned by user {}&quot;,</span>
+<span class="fc" id="L175">                    userId, assessmentId, existingAssessment.getUserId());</span>
+<span class="fc" id="L176">            throw new BadRequestException(&quot;You can only update your own assessments&quot;);</span>
+        }
+
+        // Validate dimension definition IDs
+<span class="fc" id="L180">        validateDimensionDefinitionIds(requestDto.getDimensions());</span>
+
+<span class="fc" id="L182">        reSubmissionValidation(userId);</span>
+
+        // Calculate new weighted average score
+<span class="fc" id="L185">        int newAverageScore = calculateWeightedAverageScore(requestDto.getDimensions());</span>
+
+        // Update assessment fields
+<span class="fc" id="L188">        existingAssessment.setReflection(requestDto.getReflection());</span>
+<span class="fc" id="L189">        existingAssessment.setSubmissionStatus(requestDto.getStatus());</span>
+<span class="fc" id="L190">        existingAssessment.setAverageScore(newAverageScore);</span>
+
+        // Remove existing dimensions
+<span class="fc" id="L193">        dimensionRepository.deleteByAssessmentId(assessmentId);</span>
+<span class="fc" id="L194">        log.debug(&quot;Deleted existing dimensions for assessmentId={}&quot;, assessmentId);</span>
+
+        // Save updated assessment first
+<span class="fc" id="L197">        Assessment savedAssessment = assessmentRepository.save(existingAssessment);</span>
+<span class="fc" id="L198">        log.info(&quot;Assessment updated with id={} and new averageScore={}&quot;, savedAssessment.getId(), newAverageScore);</span>
+
+        // Create new dimensions
+<span class="fc" id="L201">        createNewDimension(requestDto, savedAssessment, &quot;Updated {} new assessment dimensions for assessmentId={}&quot;);</span>
+
+        // Publish assessment updated event
+        try {
+<span class="fc" id="L205">            assessmentEventProducer.publishAssessmentUpdated(savedAssessment);</span>
+<span class="fc" id="L206">            log.info(&quot;Assessment updated event published successfully for assessmentId={}&quot;, savedAssessment.getId());</span>
+<span class="nc" id="L207">        } catch (Exception e) {</span>
+<span class="nc" id="L208">            log.error(&quot;Failed to publish assessment updated event for assessmentId={}: {}&quot;,</span>
+<span class="nc" id="L209">                    savedAssessment.getId(), e.getMessage(), e);</span>
+            // Don't fail the transaction if event publishing fails
+<span class="fc" id="L211">        }</span>
+
+<span class="fc" id="L213">        return assessmentMapper.toResponseDto(savedAssessment);</span>
+    }
+
+    private void createNewDimension(AssessmentRequestDTO requestDto, Assessment savedAssessment, String s) {
+<span class="fc" id="L217">        List&lt;AssessmentDimension&gt; newDimensions = requestDto.getDimensions().stream()</span>
+<span class="fc" id="L218">                .map(dim -&gt; {</span>
+<span class="fc" id="L219">                    DimensionDefinition definition = getDimension(dim.getDimensionDefinitionId());</span>
+<span class="fc" id="L220">                    return AssessmentDimension.builder()</span>
+<span class="fc" id="L221">                            .assessment(savedAssessment)</span>
+<span class="fc" id="L222">                            .dimensionDefinition(definition)</span>
+<span class="fc" id="L223">                            .rating(dim.getRating())</span>
+<span class="fc" id="L224">                            .build();</span>
+<span class="fc" id="L225">                }).toList();</span>
+
+<span class="fc" id="L227">        dimensionRepository.saveAll(newDimensions);</span>
+<span class="fc" id="L228">        log.info(s, newDimensions.size(), savedAssessment.getId());</span>
+
+<span class="fc" id="L230">        savedAssessment.setDimensions(newDimensions);</span>
+<span class="fc" id="L231">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

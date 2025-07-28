@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DimensionDefinitionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test</a> &gt; <a href="index.source.html" class="el_package">com.talentradar.assessment_service.service.impl</a> &gt; <span class="el_source">DimensionDefinitionServiceImpl.java</span></div><h1>DimensionDefinitionServiceImpl.java</h1><pre class="source lang-java linenums">package com.talentradar.assessment_service.service.impl;
+
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.CreateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.response.DimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.dimensionDefinition.request.UpdateDimensionDefinitionDto;
+import com.talentradar.assessment_service.dto.gradingCriteria.response.GradingCriteriaDto;
+import com.talentradar.assessment_service.exception.DimensionDefinitionNotFoundException;
+import com.talentradar.assessment_service.exception.GradingCriteriaNotFoundException;
+import com.talentradar.assessment_service.model.DimensionDefinition;
+import com.talentradar.assessment_service.model.GradingCriteria;
+import com.talentradar.assessment_service.repository.DimensionDefinitionRepository;
+import com.talentradar.assessment_service.repository.GradingCriteriaRepository;
+import com.talentradar.assessment_service.service.DimensionDefinitionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class DimensionDefinitionServiceImpl implements DimensionDefinitionService {
+
+    private final DimensionDefinitionRepository dimensionDefinitionRepository;
+    private final GradingCriteriaRepository gradingCriteriaRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;DimensionDefinitionDto&gt; getAllDimensions() {
+<span class="fc" id="L35">        return dimensionDefinitionRepository.findAll()</span>
+<span class="fc" id="L36">                .stream()</span>
+<span class="fc" id="L37">                .map(this::mapToDto)</span>
+<span class="fc" id="L38">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DimensionDefinitionDto getDimensionById(UUID id) {
+<span class="fc" id="L44">        DimensionDefinition dimension = dimensionDefinitionRepository.findById(id)</span>
+<span class="fc" id="L45">                .orElseThrow(() -&gt; new DimensionDefinitionNotFoundException(&quot;Dimension not found with id: &quot; + id));</span>
+<span class="fc" id="L46">        return mapToDto(dimension);</span>
+    }
+
+    @Override
+    public DimensionDefinitionDto createDimension(CreateDimensionDefinitionDto createDto) {
+<span class="fc" id="L51">        Set&lt;GradingCriteria&gt; gradingCriteria = new HashSet&lt;&gt;();</span>
+<span class="pc bpc" id="L52" title="3 of 4 branches missed.">        if (createDto.getGradingCriteriaIds() != null &amp;&amp; !createDto.getGradingCriteriaIds().isEmpty()) {</span>
+<span class="nc" id="L53">            gradingCriteria = validateAndFetchGradingCriteria(createDto.getGradingCriteriaIds());</span>
+        }
+
+<span class="fc" id="L56">        DimensionDefinition dimension = DimensionDefinition.builder()</span>
+<span class="fc" id="L57">                .dimensionName(createDto.getDimensionName())</span>
+<span class="fc" id="L58">                .description(createDto.getDescription())</span>
+<span class="fc" id="L59">                .weight(createDto.getWeight())</span>
+<span class="fc" id="L60">                .gradingCriteriaSet(gradingCriteria)</span>
+<span class="fc" id="L61">                .build();</span>
+
+<span class="fc" id="L63">        DimensionDefinition savedDimension = dimensionDefinitionRepository.save(dimension);</span>
+<span class="fc" id="L64">        return mapToDto(savedDimension);</span>
+    }
+
+    @Override
+    public DimensionDefinitionDto updateDimension(UUID id, UpdateDimensionDefinitionDto updateDto) {
+<span class="fc" id="L69">        DimensionDefinition dimension = dimensionDefinitionRepository.findById(id)</span>
+<span class="fc" id="L70">                .orElseThrow(() -&gt; new DimensionDefinitionNotFoundException(&quot;Dimension not found with id: &quot; + id));</span>
+
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (updateDto.getDimensionName() != null) {</span>
+<span class="fc" id="L73">            dimension.setDimensionName(updateDto.getDimensionName());</span>
+        }
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (updateDto.getDescription() != null) {</span>
+<span class="fc" id="L76">            dimension.setDescription(updateDto.getDescription());</span>
+        }
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (updateDto.getWeight() != null) {</span>
+<span class="fc" id="L79">            dimension.setWeight(updateDto.getWeight());</span>
+        }
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (updateDto.getGradingCriteriaIds() != null) {</span>
+<span class="nc" id="L82">            Set&lt;GradingCriteria&gt; gradingCriteria = validateAndFetchGradingCriteria(updateDto.getGradingCriteriaIds());</span>
+<span class="nc" id="L83">            dimension.setGradingCriteriaSet(gradingCriteria);</span>
+        }
+
+<span class="fc" id="L86">        DimensionDefinition updatedDimension = dimensionDefinitionRepository.save(dimension);</span>
+<span class="fc" id="L87">        return mapToDto(updatedDimension);</span>
+    }
+
+    @Override
+    public void deleteDimension(UUID id) {
+<span class="fc" id="L92">        DimensionDefinition dimension = dimensionDefinitionRepository.findById(id)</span>
+<span class="fc" id="L93">                .orElseThrow(() -&gt; new DimensionDefinitionNotFoundException(&quot;Dimension not found with id: &quot; + id));</span>
+<span class="fc" id="L94">        dimensionDefinitionRepository.delete(dimension);</span>
+<span class="fc" id="L95">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean dimensionExists(UUID id) {
+<span class="fc" id="L100">        return dimensionDefinitionRepository.existsById(id);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;DimensionDefinitionDto&gt; getDimensionsByIds(List&lt;UUID&gt; ids) {
+<span class="nc" id="L106">        return dimensionDefinitionRepository.findAllById(ids)</span>
+<span class="nc" id="L107">                .stream()</span>
+<span class="nc" id="L108">                .map(this::mapToDto)</span>
+<span class="nc" id="L109">                .collect(Collectors.toList());</span>
+    }
+
+    private Set&lt;GradingCriteria&gt; validateAndFetchGradingCriteria(Set&lt;UUID&gt; criteriaIds) {
+<span class="nc" id="L113">        Set&lt;GradingCriteria&gt; gradingCriteria = new HashSet&lt;&gt;(gradingCriteriaRepository.findAllById(criteriaIds));</span>
+
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (gradingCriteria.size() != criteriaIds.size()) {</span>
+<span class="nc" id="L116">            Set&lt;UUID&gt; foundIds = gradingCriteria.stream()</span>
+<span class="nc" id="L117">                    .map(GradingCriteria::getId)</span>
+<span class="nc" id="L118">                    .collect(Collectors.toSet());</span>
+<span class="nc" id="L119">            Set&lt;UUID&gt; missingIds = criteriaIds.stream()</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">                    .filter(id -&gt; !foundIds.contains(id))</span>
+<span class="nc" id="L121">                    .collect(Collectors.toSet());</span>
+<span class="nc" id="L122">            throw new GradingCriteriaNotFoundException(&quot;Grading criteria not found with ids: &quot; + missingIds);</span>
+        }
+
+<span class="nc" id="L125">        return gradingCriteria;</span>
+    }
+
+    private DimensionDefinitionDto mapToDto(DimensionDefinition dimension) {
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        Set&lt;GradingCriteriaDto&gt; gradingCriteriaDto = dimension.getGradingCriteriaSet() != null ?</span>
+<span class="fc" id="L130">                dimension.getGradingCriteriaSet().stream()</span>
+<span class="fc" id="L131">                        .map(this::mapGradingCriteriaToDto)</span>
+<span class="pc" id="L132">                        .collect(Collectors.toSet()) : new HashSet&lt;&gt;();</span>
+
+<span class="fc" id="L134">        return DimensionDefinitionDto.builder()</span>
+<span class="fc" id="L135">                .id(dimension.getId())</span>
+<span class="fc" id="L136">                .dimensionName(dimension.getDimensionName())</span>
+<span class="fc" id="L137">                .description(dimension.getDescription())</span>
+<span class="fc" id="L138">                .weight(dimension.getWeight())</span>
+<span class="fc" id="L139">                .gradingCriteria(gradingCriteriaDto)</span>
+<span class="fc" id="L140">                .build();</span>
+    }
+
+    private GradingCriteriaDto mapGradingCriteriaToDto(GradingCriteria gradingCriteria) {
+<span class="nc" id="L144">        return GradingCriteriaDto.builder()</span>
+<span class="nc" id="L145">                .id(gradingCriteria.getId())</span>
+<span class="nc" id="L146">                .criteriaName(gradingCriteria.getCriteriaName())</span>
+<span class="nc" id="L147">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
