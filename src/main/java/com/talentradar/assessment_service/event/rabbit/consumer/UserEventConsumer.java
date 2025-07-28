@@ -2,8 +2,6 @@ package com.talentradar.assessment_service.event.rabbit.consumer;
 
 import com.rabbitmq.client.Channel;
 import com.talentradar.assessment_service.config.RabbitMQConfig;
-import com.talentradar.assessment_service.event.EventType;
-import com.talentradar.assessment_service.event.Role;
 import com.talentradar.assessment_service.event.UserEvent;
 import com.talentradar.assessment_service.model.UserRole;
 import com.talentradar.assessment_service.model.UserSnapshot;
@@ -18,11 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor  // This handles dependency injection automatically
+@RequiredArgsConstructor
 @Slf4j
 public class UserEventConsumer {
 
-    // Use final field with @RequiredArgsConstructor - DON'T use @Autowired
+
     private final UserSnapshotRepository userSnapshotRepository;
 
     // Single listener method for the queue - handles all user events
@@ -33,13 +31,6 @@ public class UserEventConsumer {
         try {
             log.info("👍 Received user event: {} for user: {}", userEvent.getEventType(), userEvent.getUserId());
             log.debug("Event data: {}", userEvent);
-
-            // Only process DEVELOPER and MANAGER roles
-//            if (userEvent.getRole() == null || !isValidRole(userEvent.getRole().name())) {
-//                log.info("Ignoring user event for role: {}", userEvent.getRole());
-//                channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-//                return;
-//            }
 
             // Handle different event types
             switch (userEvent.getEventType().name()) {
@@ -56,11 +47,11 @@ public class UserEventConsumer {
 
             // Acknowledge the message
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-            log.info("✅ Successfully processed user event: {} for user: {}",
+            log.info("Successfully processed user event: {} for user: {}",
                     userEvent.getEventType(), userEvent.getUserId());
 
         } catch (Exception e) {
-            log.error("❌ Error processing user event: {}", e.getMessage(), e);
+            log.error("Error processing user event: {}", e.getMessage(), e);
             try {
                 // Reject and requeue the message
                 channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
@@ -70,17 +61,9 @@ public class UserEventConsumer {
         }
     }
 
-
-
-    private boolean isValidRole(String role) {
-        return "DEVELOPER".equals(role) || "MANAGER".equals(role);
-    }
-
-    // Private method - called internally, not a separate listener
-//    @RabbitListener(queues = RabbitMQConfig.USER_CREATED_KEY)
     private void handleUserCreatedOrUpdated(UserEvent userEvent) {
         try {
-            log.info("🔄 Processing user created/updated event for userId: {}", userEvent.getUserId());
+            log.info("Processing user created/updated event for userId: {}", userEvent.getUserId());
 
             Optional<UserSnapshot> existingSnapshot = userSnapshotRepository.findByUserId(userEvent.getUserId());
 
@@ -96,7 +79,7 @@ public class UserEventConsumer {
                 snapshot.setEmail(existingSnapshot.get().getEmail());
 
                 userSnapshotRepository.save(snapshot);
-                log.info("✅ Updated user snapshot for userId: {}", userEvent.getUserId());
+                log.info("Updated user snapshot for userId: {}", userEvent.getUserId());
             } else {
                 // Create new snapshot
                 UserSnapshot snapshot = UserSnapshot.builder()
@@ -109,28 +92,28 @@ public class UserEventConsumer {
                         .build();
 
                 userSnapshotRepository.save(snapshot);
-                log.info("✅ Created new user snapshot for userId: {}", userEvent.getUserId());
+                log.info("Created new user snapshot for userId: {}", userEvent.getUserId());
             }
         } catch (Exception e) {
-            log.error("❌ Error handling user created/updated: {}", e.getMessage(), e);
+            log.error("Error handling user created/updated: {}", e.getMessage(), e);
             throw e; // Re-throw to trigger message requeue
         }
     }
 
     private void handleUserDeleted(UserEvent userEvent) {
         try {
-            log.info("🗑️ Processing user deleted event for userId: {}", userEvent.getUserId());
+            log.info("Processing user deleted event for userId: {}", userEvent.getUserId());
 
             Optional<UserSnapshot> existingSnapshot = userSnapshotRepository.findByUserId(userEvent.getUserId());
 
             if (existingSnapshot.isPresent()) {
                 userSnapshotRepository.delete(existingSnapshot.get());
-                log.info("✅ Deleted user snapshot for userId: {}", userEvent.getUserId());
+                log.info("Deleted user snapshot for userId: {}", userEvent.getUserId());
             } else {
-                log.warn("⚠️ Attempted to delete non-existent user snapshot for userId: {}", userEvent.getUserId());
+                log.warn("Attempted to delete non-existent user snapshot for userId: {}", userEvent.getUserId());
             }
         } catch (Exception e) {
-            log.error("❌ Error handling user deleted: {}", e.getMessage(), e);
+            log.error("Error handling user deleted: {}", e.getMessage(), e);
             throw e; // Re-throw to trigger message requeue
         }
     }
