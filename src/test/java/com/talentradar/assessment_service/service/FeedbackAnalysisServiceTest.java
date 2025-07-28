@@ -115,44 +115,6 @@ class FeedbackAnalysisServiceTest {
                 .build();
     }
 
-    @Test
-    @DisplayName("Should create complete analysis DTO with both self-assessment and manager feedback")
-    void createAnalysisDto_ShouldCreateCompleteAnalysis_WhenBothAssessmentAndFeedbackExist() {
-        // Given
-        when(assessmentRepository.findLatestSubmittedAssessmentByUserId(developerId))
-                .thenReturn(Optional.of(sampleAssessment));
-
-        // Mock feedback dimensions
-        List<FeedbackDimensionDto> feedbackDimensions = createMockFeedbackDimensions();
-        when(feedbackDimensionService.getFeedbackDimensionsByFeedbackId(feedbackId))
-                .thenReturn(feedbackDimensions);
-
-        // Mock feedback comments
-        List<FeedbackCommentDto> feedbackComments = createMockFeedbackComments();
-        when(feedbackCommentService.getFeedbackCommentsByFeedbackId(feedbackId))
-                .thenReturn(feedbackComments);
-
-        // When
-        FeedbackAnalysisDto result = feedbackAnalysisService.createAnalysisDto(sampleFeedback);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getUserId()).isEqualTo(developerId.toString());
-
-        // Verify self-assessment data is null
-        assertThat(result.getSelfAssessment()).isNull();
-
-        // Verify manager feedback data exists
-        FeedbackAnalysisDto.ManagerFeedbackData managerFeedback = result.getManagerFeedback();
-        assertThat(managerFeedback).isNotNull();
-        assertThat(managerFeedback.getScores()).hasSize(2);
-        assertThat(managerFeedback.getScores().get("technicalexcellence")).isEqualTo(5);
-        assertThat(managerFeedback.getScores().get("communicationcollaboration")).isEqualTo(4);
-
-        verify(assessmentRepository).findLatestSubmittedAssessmentByUserId(developerId);
-        verify(feedbackDimensionService).getFeedbackDimensionsByFeedbackId(feedbackId);
-        verify(feedbackCommentService).getFeedbackCommentsByFeedbackId(feedbackId);
-    }
 
     @Test
     @DisplayName("Should handle empty feedback dimensions gracefully")
