@@ -48,6 +48,8 @@ build/
 
 # Build artifacts
 target/
+.allure/
+allure-results/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
